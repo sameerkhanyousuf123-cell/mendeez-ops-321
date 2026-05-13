@@ -1,0 +1,1912 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mendeez Ops Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0d0d;--surface:#161616;--surface2:#1f1f1f;
+  --border:#2a2a2a;--border2:#333;--text:#f0ede8;--muted:#777;--muted2:#444;
+  --accent:#e8c547;--accent-dim:#3a3010;
+  --red:#e05252;--red-dim:#2e1212;
+  --green:#4caf7d;--green-dim:#0d2719;
+  --blue:#5b9cf6;--blue-dim:#0e1f3a;
+  --orange:#f0974a;--orange-dim:#2e1a08;
+  --mono:'DM Mono',monospace;--sans:'Syne',sans-serif;
+}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 28px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:100}
+.logo{font-size:17px;font-weight:700;letter-spacing:.08em;color:var(--accent)}
+.logo span{color:var(--muted);font-weight:400;font-size:12px;margin-left:8px}
+.topbar-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.badge{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;padding:3px 9px;border-radius:4px;white-space:nowrap}
+.badge-green{background:var(--green-dim);color:var(--green)}
+.badge-amber{background:var(--accent-dim);color:var(--accent)}
+.badge-red{background:var(--red-dim);color:var(--red)}
+.badge-grey{background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
+.ldot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.upd{font-family:var(--mono);font-size:10px;color:var(--muted)}
+.tabs{display:flex;border-bottom:1px solid var(--border);padding:0 28px;overflow-x:auto}
+.tab{padding:12px 16px;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap;letter-spacing:.03em}
+.tab:hover{color:var(--text)}.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.content{padding:22px 28px;max-width:1440px}
+.panel{display:none}.panel.active{display:block}
+/* OVERLAY */
+.overlay{position:fixed;inset:0;background:rgba(13,13,13,.93);display:flex;align-items:center;justify-content:center;z-index:200;backdrop-filter:blur(4px)}
+.setup-box{background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:32px 40px;max-width:540px;width:100%;max-height:90vh;overflow-y:auto}
+.setup-title{font-size:19px;font-weight:700;color:var(--accent);margin-bottom:4px}
+.setup-sub{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:20px}
+.setup-sec{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin:14px 0 8px;display:flex;align-items:center;gap:8px}
+.setup-sec::after{content:'';flex:1;height:1px;background:var(--border)}
+.spinner{width:28px;height:28px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.cnote{font-size:10px;color:var(--muted2);margin-top:12px;line-height:1.7}
+/* FORMS */
+.fg{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
+.fl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.fi{background:var(--surface2);border:1px solid var(--border2);color:var(--text);padding:8px 11px;border-radius:6px;font-family:var(--mono);font-size:12px;outline:none;transition:border-color .2s;width:100%}
+.fi:focus{border-color:var(--accent)}.fi::placeholder{color:var(--muted2)}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{border:none;padding:9px 18px;border-radius:6px;font-family:var(--sans);font-size:12px;font-weight:600;cursor:pointer;transition:opacity .2s;white-space:nowrap}
+.btn-p{background:var(--accent);color:#000}.btn-p:hover{opacity:.85}
+.btn-s{background:transparent;border:1px solid var(--border2);color:var(--text)}.btn-s:hover{background:var(--surface2)}
+.btn-full{width:100%;margin-top:6px;padding:11px}
+.btn-sm{padding:6px 14px;font-size:11px}
+/* DATE STRIP */
+.ds{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.dt{font-size:19px;font-weight:700}.dsub{font-size:11px;color:var(--muted);font-family:var(--mono);margin-top:2px}
+/* STAT GRID */
+.sg{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;margin-bottom:18px}
+.sc{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px;transition:border-color .2s}
+.sc:hover{border-color:var(--border2)}
+.sl{font-size:10px;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;margin-bottom:5px}
+.sv{font-size:22px;font-weight:700;font-family:var(--mono)}
+.sv.green{color:var(--green)}.sv.red{color:var(--red)}.sv.amber{color:var(--accent)}.sv.blue{color:var(--blue)}.sv.muted{color:var(--muted)}
+.ssub{font-size:10px;color:var(--muted);margin-top:3px;font-family:var(--mono)}
+/* ALERTS */
+.alert{border-radius:6px;padding:10px 14px;font-size:12px;margin-bottom:10px;display:flex;align-items:flex-start;gap:8px;line-height:1.5}
+.al-red{background:var(--red-dim);border:1px solid #3d1515;color:#f08080}
+.al-amber{background:var(--accent-dim);border:1px solid #3d2e00;color:var(--accent)}
+.al-green{background:var(--green-dim);border:1px solid #0d3020;color:#6fcfa0}
+.al-blue{background:var(--blue-dim);border:1px solid #1a3a6a;color:#8bbfff}
+/* LAYOUTS */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:960px){.two-col,.three-col{grid-template-columns:1fr}}
+/* SECTION HEAD */
+.sh{display:flex;align-items:center;justify-content:space-between;margin:20px 0 10px}
+.st{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.ss{font-size:11px;color:var(--muted2);font-family:var(--mono)}
+/* TABLE */
+.tc{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:14px}
+.th{padding:12px 16px;border-bottom:1px solid var(--border);font-size:12px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+table{width:100%;border-collapse:collapse}
+th{padding:8px 13px;text-align:left;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border);font-weight:500;white-space:nowrap}
+td{padding:9px 13px;border-bottom:1px solid var(--border);font-size:12px}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.02)}
+.tm{font-family:var(--mono)}.tmut{color:var(--muted)}
+/* PILLS */
+.pill{display:inline-flex;align-items:center;padding:2px 8px;border-radius:4px;font-size:10px;font-family:var(--mono);font-weight:500;white-space:nowrap}
+.pg{background:var(--green-dim);color:var(--green)}.pb{background:var(--blue-dim);color:var(--blue)}
+.pa{background:var(--accent-dim);color:var(--accent)}.pr{background:var(--red-dim);color:var(--red)}
+.pm{background:var(--surface2);color:var(--muted);border:1px solid var(--border)}.po{background:var(--orange-dim);color:var(--orange)}
+/* INPUT CARDS */
+.ic{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px}
+.ict{font-size:12px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.ibg{font-size:9px;background:var(--accent-dim);color:var(--accent);padding:2px 7px;border-radius:3px;letter-spacing:.04em}
+/* PLATFORM CARDS */
+.pg-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-bottom:14px}
+.pc{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:15px 17px;transition:border-color .2s}
+.pc:hover{border-color:var(--border2)}
+.pn{font-size:11px;font-weight:600;letter-spacing:.04em;margin-bottom:11px;display:flex;align-items:center;gap:7px}
+.pi{width:18px;height:18px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
+.im{background:#1877f2;color:#fff}.ig{background:#ea4335;color:#fff}
+.it{background:#111;color:#69c9d0;border:1px solid #333}.is{background:#fffc00;color:#000}
+.ix{background:var(--accent-dim);color:var(--accent)}
+.kr{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.kl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;margin-bottom:3px}
+.kv{font-size:17px;font-weight:700;font-family:var(--mono)}
+.kv.green{color:var(--green)}.kv.red{color:var(--red)}.kv.amber{color:var(--accent)}
+.div{border:none;border-top:1px solid var(--border);margin:9px 0}
+/* STATUS BARS */
+.sbars{display:flex;flex-direction:column;gap:9px}
+.srow{display:flex;align-items:center;gap:10px}
+.sname{font-size:11px;color:var(--muted);width:130px;flex-shrink:0}
+.btrack{flex:1;height:7px;background:var(--border);border-radius:4px;overflow:hidden}
+.bfill{height:100%;border-radius:4px;transition:width .5s ease}
+.scnt{font-size:11px;font-family:var(--mono);color:var(--text);width:36px;text-align:right;flex-shrink:0}
+.spct{font-size:10px;font-family:var(--mono);color:var(--muted);width:36px;text-align:right;flex-shrink:0}
+/* COURIER SUMMARY */
+.cg{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:10px;margin-bottom:14px}
+.cc{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:13px 15px}
+.ccl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
+.ccv{font-size:26px;font-weight:700;font-family:var(--mono)}
+.ccs{font-size:10px;color:var(--muted);margin-top:3px;font-family:var(--mono)}
+/* SPARK */
+.spark{display:flex;align-items:flex-end;gap:5px;height:60px}
+.sbar{border-radius:3px 3px 0 0;background:var(--accent);opacity:.7;min-width:18px;flex:1;cursor:default;transition:opacity .2s}
+.sbar:hover{opacity:1}
+.slbls{display:flex;gap:5px;margin-top:4px}
+.slbl{font-size:9px;font-family:var(--mono);color:var(--muted2);text-align:center;flex:1}
+/* REPORT */
+.rbox{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px;font-family:var(--mono);font-size:12px;line-height:1.9;white-space:pre-wrap}
+.bcopy{background:var(--surface2);border:1px solid var(--border2);color:var(--text);padding:7px 15px;border-radius:6px;cursor:pointer;font-family:var(--sans);font-size:12px;display:inline-flex;align-items:center;gap:7px;transition:background .2s}
+.bcopy:hover{background:var(--border)}.copied{color:var(--green)!important}
+/* SEARCH */
+.tsrch{background:var(--surface2);border:1px solid var(--border2);color:var(--text);padding:6px 11px;border-radius:5px;font-family:var(--mono);font-size:11px;outline:none;width:180px}
+.tsrch:focus{border-color:var(--accent)}
+/* SORT */
+.sort-item{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px 14px;display:flex;align-items:center;gap:14px}
+.sort-item:hover{border-color:var(--border2)}
+.srnk{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--muted2);min-width:26px}
+.srinfo{flex:1}.srname{font-weight:500;font-size:13px}
+.srmeta{font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:2px}
+.srbar{width:100px}.srbl{font-size:10px;color:var(--muted);margin-bottom:3px;font-family:var(--mono)}
+/* STATUS BAR */
+.stsbar{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);padding:7px 28px;display:flex;gap:22px;align-items:center;font-family:var(--mono);font-size:10px;color:var(--muted);z-index:100}
+.sdot{width:5px;height:5px;border-radius:50%;display:inline-block;margin-right:4px}
+
+/* DATE BAR */
+.datebar{background:var(--surface);border-bottom:1px solid var(--border);padding:9px 28px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.dp{padding:5px 11px;border-radius:5px;font-family:var(--mono);font-size:11px;cursor:pointer;border:1px solid var(--border2);background:transparent;color:var(--muted);transition:all .15s;white-space:nowrap}
+.dp:hover{color:var(--text);background:var(--surface2)}
+.dp.active{background:var(--accent-dim);color:var(--accent);border-color:var(--accent);font-weight:600}
+.dsep{width:1px;height:18px;background:var(--border);flex-shrink:0;margin:0 4px}
+.ddate{background:var(--surface2);border:1px solid var(--border2);color:var(--text);padding:5px 9px;border-radius:5px;font-family:var(--mono);font-size:11px;outline:none}
+.ddate:focus{border-color:var(--accent)}
+.dlbl{font-size:11px;color:var(--muted);font-family:var(--mono);white-space:nowrap}
+.dapply{background:var(--accent);color:#000;border:none;padding:5px 13px;border-radius:5px;font-family:var(--sans);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap}
+.dapply:hover{opacity:.85}
+.dactive{font-size:11px;font-family:var(--mono);color:var(--accent);margin-left:4px;white-space:nowrap}
+
+/* SHIMMER */
+.shimmer{background:linear-gradient(90deg,var(--surface) 25%,var(--surface2) 50%,var(--surface) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:4px;height:24px}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+/* PAGINATION */
+.pager{display:flex;align-items:center;gap:8px;padding:9px 13px;border-top:1px solid var(--border);font-family:var(--mono);font-size:11px;color:var(--muted)}
+.pager button{background:var(--surface2);border:1px solid var(--border2);color:var(--text);padding:3px 10px;border-radius:4px;cursor:pointer;font-family:var(--mono);font-size:11px}
+.pager button:disabled{opacity:.3;cursor:not-allowed}
+.nodata{text-align:center;padding:24px;color:var(--muted2);font-size:12px}
+.ldrow{text-align:center;padding:24px;color:var(--muted);font-family:var(--mono);font-size:12px}
+.si{display:inline-block;width:12px;height:12px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
+/* CS SECTION */
+.cs-agent-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
+.cs-agent-row:last-child{border-bottom:none}
+.cs-agent-name{font-size:12px;font-weight:600;color:var(--text);min-width:100px}
+.cs-kpi-row{display:flex;gap:20px}
+.cs-kpi{text-align:center}
+.cs-kpi-val{font-size:18px;font-weight:700;font-family:var(--mono)}
+.cs-kpi-lbl{font-size:10px;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:.03em}
+</style>
+</head>
+<body>
+
+<!-- SETUP OVERLAY -->
+<div class="overlay" id="setupOverlay">
+  <div class="setup-box">
+    <div class="setup-title">MENDEEZ OPS</div>
+    <div class="setup-sub">Connect your four data sources. Open the file from anywhere — Chrome, Firefox, or Edge.</div>
+
+    <div class="setup-sec">① Shopify — Live Sales & Stock</div>
+    <div class="fg"><div class="fl">Store URL</div><input class="fi" id="cfgStore" placeholder="yourstore.myshopify.com"></div>
+    <div class="fg"><div class="fl">Admin API Token</div><input class="fi" id="cfgToken" type="password" placeholder="shpat_xxxxxxxxxxxxxxxx"></div>
+
+    <div class="setup-sec">② Google Sheet — Ads + Courier + CS</div>
+    <div class="fg"><div class="fl">Sheet ID</div><input class="fi" id="cfgSheet" value="1OOcuvCYCX9Svl8nH3BpbJWeABoA4VWgq6e0M_UC5lZs" placeholder="Google Sheet ID"></div>
+    <div class="fr">
+      <div class="fg"><div class="fl">Ads Tab</div><input class="fi" id="cfgAds" value="Think Spendin PW 26"></div>
+      <div class="fg"><div class="fl">Courier Tab</div><input class="fi" id="cfgCrr" value="Courier Data 26"></div>
+    </div>
+    <div class="fg"><div class="fl">CS / Performance Tab</div><input class="fi" id="cfgCS" value="Perf Report 26"></div>
+
+    <button class="btn btn-p btn-full" onclick="connectAll()">Connect & Load Dashboard</button>
+    <button class="btn btn-s btn-full" style="margin-top:8px" onclick="loadDemo()">Use Demo Data</button>
+    <div class="cnote">Shopify: Admin → Settings → Apps → Develop Apps → read_orders, read_products, read_inventory<br>Google Sheet: must be set to <strong style="color:var(--accent)">"Anyone with the link can view"</strong></div>
+    <button class="btn btn-s btn-full" style="margin-top:10px;font-size:11px" onclick="testSheetConnection()">🔍 Test Sheet Connection</button>
+    <div id="sheetTestResult" style="margin-top:10px;font-family:var(--mono);font-size:11px;color:var(--muted);line-height:1.8;display:none"></div>
+  </div>
+</div>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div style="display:flex;align-items:center;gap:10px">
+    <div class="logo">MENDEEZ <span>Operations Dashboard</span></div>
+  </div>
+  <div class="topbar-right">
+    <div class="badge badge-grey" id="bShopify"><div class="sdot" style="background:var(--muted2)"></div>Shopify</div>
+    <div class="badge badge-grey" id="bAds"><div class="sdot" style="background:var(--muted2)"></div>Ads</div>
+    <div class="badge badge-grey" id="bCrr"><div class="sdot" style="background:var(--muted2)"></div>Courier</div>
+    <div class="badge badge-grey" id="bCS"><div class="sdot" style="background:var(--muted2)"></div>CS</div>
+    <div class="upd">Updated: <span id="lastUpd">—</span></div>
+    <button class="btn btn-s btn-sm" onclick="refreshAll()">↻ Refresh</button>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('daily',this)">Daily Overview</div>
+  <div class="tab" onclick="switchTab('ads',this)">Ads</div>
+  <div class="tab" onclick="switchTab('courier',this)">Courier</div>
+  <div class="tab" onclick="switchTab('cs',this)">CS & Confirmations</div>
+  <div class="tab" onclick="switchTab('products',this)">Products & Stock</div>
+  <div class="tab" onclick="switchTab('sorter',this)">Catalog Sorter</div>
+  <div class="tab" onclick="switchTab('manual',this)">Manual Inputs</div>
+  <div class="tab" onclick="switchTab('report',this)">Daily Report</div>
+</div>
+
+<!-- DATE RANGE BAR -->
+<div class="datebar">
+  <span class="dlbl">Range:</span>
+  <button class="dp active" id="dp-today"     onclick="setPreset('today',this)">Today</button>
+  <button class="dp"         id="dp-yesterday" onclick="setPreset('yesterday',this)">Yesterday</button>
+  <button class="dp"         id="dp-2days"     onclick="setPreset('2days',this)">Day Before</button>
+  <button class="dp"         id="dp-7days"     onclick="setPreset('7days',this)">Last 7 Days</button>
+  <button class="dp"         id="dp-30days"    onclick="setPreset('30days',this)">Last 30 Days</button>
+  <button class="dp"         id="dp-mtd"       onclick="setPreset('mtd',this)">This Month</button>
+  <div class="dsep"></div>
+  <span class="dlbl">Custom:</span>
+  <input class="ddate" type="date" id="dateFrom">
+  <span class="dlbl">to</span>
+  <input class="ddate" type="date" id="dateTo">
+  <button class="dapply" onclick="applyCustom()">Apply</button>
+  <div class="dsep"></div>
+  <span class="dactive" id="dActiveLbl">📅 Today</span>
+</div>
+
+<div class="content">
+
+<!-- ══ DAILY OVERVIEW ══ -->
+<div class="panel active" id="panel-daily">
+  <div class="ds">
+    <div><div class="dt" id="todayDate">Today</div><div class="dsub">Shopify live · Ads, Courier & CS from Google Sheet · Manual flags only</div></div>
+    <button class="btn btn-s btn-sm" onclick="refreshAll()">↻ Refresh All</button>
+  </div>
+  <div id="alertsZone"></div>
+  <div class="sg" id="statGrid">
+    <div class="sc"><div class="sl">Revenue (Today)</div><div class="sv amber shimmer" id="s-rev" style="height:26px;width:75%"></div></div>
+    <div class="sc"><div class="sl">Orders</div><div class="sv shimmer" id="s-ord" style="height:26px;width:55%"></div></div>
+    <div class="sc"><div class="sl">Avg Order Value</div><div class="sv shimmer" id="s-aov" style="height:26px;width:65%"></div></div>
+    <div class="sc"><div class="sl">Blended ROAS</div><div class="sv shimmer" id="s-roas" style="height:26px;width:55%"></div></div>
+    <div class="sc"><div class="sl">Total Ad Spend</div><div class="sv shimmer" id="s-spend" style="height:26px;width:65%"></div></div>
+    <div class="sc"><div class="sl">Confirmation Rate</div><div class="sv shimmer" id="s-conf" style="height:26px;width:55%"></div></div>
+    <div class="sc"><div class="sl">Dispatched (Courier)</div><div class="sv shimmer" id="s-disp" style="height:26px;width:50%"></div></div>
+    <div class="sc"><div class="sl">RTO / Returns</div><div class="sv shimmer" id="s-rto" style="height:26px;width:45%"></div></div>
+  </div>
+  <!-- WEEKLY TOP 20 -->
+  <div class="sh" style="margin-top:4px">
+    <div class="st">📈 Top 20 Products — Last 7 Days</div>
+    <div class="ss" id="weeklyRange">—</div>
+  </div>
+  <div class="tc">
+    <table>
+      <thead><tr><th>#</th><th>Product</th><th>Type</th><th>Units</th><th>Revenue</th><th>Daily Avg</th><th>Stock</th></tr></thead>
+      <tbody id="top20Tbl"><tr><td colspan="7" class="ldrow"><span class="si"></span>Loading weekly data...</td></tr></tbody>
+    </table>
+  </div>
+
+  <!-- NO SALE DIAGNOSIS -->
+  <div class="sh" style="margin-top:6px">
+    <div class="st">🔍 No-Sale Products — Closest Reasons</div>
+    <div class="ss">Active products with zero orders this week</div>
+  </div>
+  <div class="tc">
+    <table>
+      <thead><tr><th>Product</th><th>Type</th><th>Stock</th><th>Price</th><th>Likely Reason</th><th>Action</th></tr></thead>
+      <tbody id="noSaleTbl"><tr><td colspan="6" class="ldrow"><span class="si"></span>Loading...</td></tr></tbody>
+    </table>
+  </div>
+
+  <!-- 7 DAY REVENUE TREND -->
+  <div class="sh" style="margin-top:6px"><div class="st">7-Day Revenue Trend</div></div>
+  <div class="tc" style="padding:16px">
+    <div class="spark" id="sparkChart" style="height:70px"></div>
+    <div class="slbls" id="sparkLabels"></div>
+  </div>
+</div>
+
+<!-- ══ ADS ══ -->
+<div class="panel" id="panel-ads">
+  <div class="ds">
+    <div><div class="dt">Ads Performance</div><div class="dsub">Live from Google Sheet · <span id="adsDateLbl">—</span></div></div>
+    <button class="btn btn-s btn-sm" onclick="fetchSheets()">↻ Refresh</button>
+  </div>
+  <div class="alert al-blue"><div>ℹ</div><div>Pulled from your Google Sheet automatically. Ads team updates the sheet — dashboard reads it on every refresh.</div></div>
+  <div class="sh"><div class="st">Today by Platform</div></div>
+  <div class="pg-grid" id="platCards"><div class="ldrow"><span class="si"></span>Loading...</div></div>
+  <div class="sh"><div class="st">Last 7 Days</div></div>
+  <div class="tc"><table>
+    <thead><tr><th>Date</th><th>Meta Spend</th><th>Meta ROAS</th><th>Google Spend</th><th>Google ROAS</th><th>TikTok Spend</th><th>TikTok ROAS</th><th>Snap Spend</th><th>Snap ROAS</th><th>Total Spend</th><th>Blended ROAS</th></tr></thead>
+    <tbody id="adsTbl"><tr><td colspan="11" class="ldrow"><span class="si"></span>Loading...</td></tr></tbody>
+  </table></div>
+</div>
+
+<!-- ══ COURIER ══ -->
+<div class="panel" id="panel-courier">
+  <div class="ds">
+    <div><div class="dt">Courier Tracking</div><div class="dsub">Live from Google Sheet · Booked excluded · Arrived + Out For Delivery = Dispatched</div></div>
+    <button class="btn btn-s btn-sm" onclick="fetchSheets()">↻ Refresh</button>
+  </div>
+  <div class="cg" id="crrCards"><div class="ldrow"><span class="si"></span>Loading...</div></div>
+  <div class="two-col">
+    <div>
+      <div class="sh"><div class="st">Status Breakdown</div></div>
+      <div class="tc" style="padding:16px"><div class="sbars" id="statusBars"><div class="ldrow"><span class="si"></span></div></div></div>
+    </div>
+    <div>
+      <div class="sh"><div class="st">Today's Shipments</div></div>
+      <div class="tc" style="padding:15px"><div id="todayShip"><div class="ldrow"><span class="si"></span></div></div></div>
+    </div>
+  </div>
+  <div class="sh"><div class="st">Shipment Detail</div><div class="ss"><input class="tsrch" id="cnSearch" placeholder="Search CN, customer, city..." oninput="filterCrr()"></div></div>
+  <div class="tc">
+    <div class="th">All CNs <span id="cnCount" style="color:var(--muted);font-weight:400;font-size:11px;margin-left:6px"></span></div>
+    <table><thead><tr><th>CN #</th><th>Ship Date</th><th>Customer</th><th>City</th><th>Product</th><th>COD</th><th>Att.</th><th>Status</th><th>Counted As</th></tr></thead>
+    <tbody id="crrTbl"><tr><td colspan="9" class="ldrow"><span class="si"></span>Loading...</td></tr></tbody></table>
+    <div class="pager" id="crrPager"></div>
+  </div>
+</div>
+
+<!-- ══ CS & CONFIRMATIONS ══ -->
+<div class="panel" id="panel-cs">
+  <div class="ds">
+    <div><div class="dt">CS & Confirmations</div><div class="dsub">Live from Perf Report 26 · Current month data</div></div>
+    <button class="btn btn-s btn-sm" onclick="fetchSheets()">↻ Refresh</button>
+  </div>
+  <div class="alert al-blue"><div>ℹ</div><div>Pulled automatically from your Perf Report sheet. Shows MTD agent performance and today's date column data.</div></div>
+  <!-- MTD SUMMARY -->
+  <div class="sh"><div class="st">MTD Agent Performance</div></div>
+  <div class="tc" id="csAgentTable"><div class="ldrow"><span class="si"></span>Loading...</div></div>
+  <!-- ORDER STATUS -->
+  <div class="sh"><div class="st">Order Status MTD</div></div>
+  <div class="sg" id="csOrderStats">
+    <div class="sc"><div class="sl">Landed MTD</div><div class="sv shimmer" id="cs-landed" style="height:24px;width:70%"></div></div>
+    <div class="sc"><div class="sl">Dispatched MTD</div><div class="sv shimmer" id="cs-dispatched" style="height:24px;width:65%"></div></div>
+    <div class="sc"><div class="sl">Delivered MTD</div><div class="sv shimmer" id="cs-delivered" style="height:24px;width:65%"></div></div>
+    <div class="sc"><div class="sl">Pending</div><div class="sv shimmer" id="cs-pending" style="height:24px;width:55%"></div></div>
+    <div class="sc"><div class="sl">Cancellations MTD</div><div class="sv shimmer" id="cs-cancel" style="height:24px;width:55%"></div></div>
+    <div class="sc"><div class="sl">Returns MTD</div><div class="sv shimmer" id="cs-returns" style="height:24px;width:55%"></div></div>
+  </div>
+  <!-- EWH WAREHOUSE -->
+  <div class="sh"><div class="st">Warehouse (EWH) MTD</div></div>
+  <div class="sg" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">
+    <div class="sc"><div class="sl">Total Dispatch Value</div><div class="sv amber" id="cs-wh-val">—</div></div>
+    <div class="sc"><div class="sl">Units Dispatched</div><div class="sv" id="cs-wh-units">—</div></div>
+    <div class="sc"><div class="sl">Return Units</div><div class="sv red" id="cs-wh-rtn">—</div></div>
+    <div class="sc"><div class="sl">Exchanges</div><div class="sv" id="cs-wh-exch">—</div></div>
+  </div>
+</div>
+
+<!-- ══ PRODUCTS ══ -->
+<div class="panel" id="panel-products">
+  <div class="ds">
+    <div><div class="dt">Products & Stock</div><div class="dsub">Live from Shopify</div></div>
+    <button class="btn btn-s btn-sm" onclick="loadProducts()">↻ Refresh</button>
+  </div>
+  <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+    <select class="fi" id="stockFilter" style="width:180px">
+      <option value="all">All stock levels</option>
+      <option value="out">Out of stock</option>
+      <option value="low">Low stock (&lt;10)</option>
+      <option value="ok">In stock</option>
+    </select>
+    <select class="fi" id="prodStatus" style="width:160px">
+      <option value="active">Active only</option>
+      <option value="all">All statuses</option>
+    </select>
+    <button class="btn btn-s btn-sm" onclick="applyProdFilter()">Filter</button>
+  </div>
+  <div class="tc"><table>
+    <thead><tr><th>Product</th><th>Variant</th><th>Stock</th><th>Status</th><th>Price</th></tr></thead>
+    <tbody id="prodTbl"><tr><td colspan="5" class="ldrow"><span class="si"></span>Loading...</td></tr></tbody>
+  </table></div>
+</div>
+
+<!-- ══ CATALOG SORTER ══ -->
+<div class="panel" id="panel-sorter">
+  <div class="ds"><div><div class="dt">Catalog Auto-Sorter</div><div class="dsub">Rank products by stock — protect ROAS from dead traffic</div></div></div>
+  <div class="alert al-amber"><div>⚡</div><div>Generates the correct product sort order by stock level. Sameer does this manually each morning — use this instead.</div></div>
+  <div class="tc" style="padding:16px;margin-bottom:12px">
+    <div class="fr" style="margin-bottom:10px">
+      <div class="fg"><div class="fl">Sort Rule</div>
+        <select class="fi" id="sortRule">
+          <option value="stock_desc">Highest stock first (default)</option>
+          <option value="stock_asc">Lowest stock first (clearance)</option>
+        </select>
+      </div>
+      <div class="fg"><div class="fl">Category</div>
+        <select class="fi" id="sortCat">
+          <option value="all">All Products</option>
+          <option value="T-Shirts">T-Shirts</option><option value="Polo">Polo</option>
+          <option value="Pajama">Pajama</option><option value="Jogger Pants">Jogger Pants</option>
+          <option value="Underwear">Underwear</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <button class="btn btn-p btn-sm" onclick="runSort()">▶ Generate Sort Order</button>
+      <button class="btn btn-s btn-sm" onclick="copySteps()">Copy Shopify Steps</button>
+      <span style="font-size:11px;color:var(--muted);font-family:var(--mono)" id="sortSts"></span>
+    </div>
+  </div>
+  <div id="sortResults"></div>
+</div>
+
+<!-- ══ MANUAL INPUTS ══ -->
+<div class="panel" id="panel-manual">
+  <div class="ds"><div><div class="dt">Manual Inputs</div><div class="dsub">Shopify, Ads, Courier & CS are automatic — only log issue flags here</div></div></div>
+  <div class="alert al-green"><div>✓</div><div>All four data sources load automatically. Only log issue flags below. Takes ~2 minutes.</div></div>
+  <div class="two-col">
+    <div class="ic">
+      <div class="ict">Issue Flags <span class="ibg">MANUAL</span></div>
+      <div class="fg"><div class="fl">Stock Issues</div><input class="fi" id="i-stock" placeholder="e.g. Blue polo L/XL out of stock"></div>
+      <div class="fg"><div class="fl">Website Issues</div><input class="fi" id="i-web" placeholder="e.g. None"></div>
+      <div class="fg"><div class="fl">Courier Issues</div><input class="fi" id="i-crr" placeholder="e.g. BlueEx delay Karachi"></div>
+      <div class="fg"><div class="fl">Main Observation</div><input class="fi" id="i-obs" placeholder="e.g. AOV up 12% today"></div>
+      <button class="btn btn-p btn-sm" style="margin-top:6px" onclick="saveManual()">Save Flags</button>
+    </div>
+    <div class="ic">
+      <div class="ict">CS Manual Override <span class="ibg">OPTIONAL</span></div>
+      <div class="alert al-amber" style="font-size:11px;margin-bottom:12px"><div>ℹ</div><div>CS data loads automatically from the sheet. Use these fields only if today's sheet hasn't been updated yet.</div></div>
+      <div class="fr">
+        <div class="fg"><div class="fl">Total Called</div><input class="fi" id="i-called" type="number" placeholder="e.g. 58"></div>
+        <div class="fg"><div class="fl">Confirmed</div><input class="fi" id="i-confirmed" type="number" placeholder="e.g. 54"></div>
+      </div>
+      <div class="fr">
+        <div class="fg"><div class="fl">Cancelled</div><input class="fi" id="i-cancelled" type="number" placeholder="e.g. 4"></div>
+        <div class="fg"><div class="fl">Returns</div><input class="fi" id="i-returns" type="number" placeholder="e.g. 11"></div>
+      </div>
+      <button class="btn btn-p btn-sm" style="margin-top:6px" onclick="saveCSOverride()">Save CS Override</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DAILY REPORT ══ -->
+<div class="panel" id="panel-report">
+  <div class="ds">
+    <div><div class="dt">Daily Report</div><div class="dsub">Auto-built from Shopify + Sheet + Manual flags</div></div>
+    <button class="bcopy" id="copyBtn" onclick="copyReport()">⎘ Copy for WhatsApp</button>
+  </div>
+  <button class="btn btn-p btn-sm" onclick="buildReport()" style="margin-bottom:12px">↺ Generate Report</button>
+  <div class="rbox" id="reportBox" style="color:var(--muted)">Click Generate Report to build today's full report from all live data.</div>
+</div>
+
+</div><!-- end .content -->
+
+<!-- STATUS BAR -->
+<div class="stsbar">
+  <span><span class="sdot" id="dot-s" style="background:var(--muted2)"></span>Shopify: <span id="sb-s">—</span></span>
+  <span><span class="sdot" id="dot-a" style="background:var(--muted2)"></span>Ads: <span id="sb-a">—</span></span>
+  <span><span class="sdot" id="dot-c" style="background:var(--muted2)"></span>Courier: <span id="sb-c">—</span></span>
+  <span><span class="sdot" id="dot-cs" style="background:var(--muted2)"></span>CS: <span id="sb-cs">—</span></span>
+  <span style="margin-left:auto;color:var(--muted2)">v3.0 · Mendeez Ops</span>
+</div>
+
+<script>
+// ═══════════ STATE ═══════════
+let STORE='',TOKEN='',SHEET_ID='',ADS_TAB='',CRR_TAB='',CS_TAB='';
+let ordersData=[],allProducts=[],manualData={};
+let allCrr=[],filtCrr=[],crrPage=1;
+const PAGE=50;
+let adsLatest=null,adsTrend=[],adsIdx=null;
+let csData={agents:[],orderStatus:{},ewh:{}};
+
+// ═══════════ HELPERS ═══════════
+const fmt=n=>Math.round(n).toLocaleString('en-PK');
+const fPKR=n=>(!n||n===0)?'—':'PKR '+fmt(n);
+const todayKey=()=>new Date().toISOString().split('T')[0];
+const nc=v=>{if(!v)return 0;return parseFloat(String(v).replace(/[^0-9.\-]/g,''))||0;};
+const rcol=r=>r>=5?'green':r>=3?'amber':'red';
+
+function setV(id,v,cls=''){
+  const e=document.getElementById(id);if(!e)return;
+  e.textContent=v;e.className='sv '+(cls||'');
+  e.classList.remove('shimmer');e.style.height='';e.style.width='';
+}
+
+function statusMap(raw){
+  if(!raw)return{l:'Unknown',c:'dispatched',p:'pm'};
+  const s=raw.trim().toLowerCase();
+  if(s==='booked')           return{l:'Booked',          c:null,         p:'pm'};
+  if(s==='arrived')          return{l:'Arrived',         c:'dispatched', p:'pb'};
+  if(s==='out for delivery') return{l:'Out For Delivery',c:'dispatched', p:'pa'};
+  if(s.includes('deliver'))  return{l:'Delivered',       c:'delivered',  p:'pg'};
+  if(s.includes('return'))   return{l:'Returned',        c:'returned',   p:'pr'};
+  return{l:raw.trim(),c:'dispatched',p:'po'};
+}
+function cPill(c){
+  if(!c)return'<span class="pill pm">— Excl.</span>';
+  if(c==='dispatched')return'<span class="pill pb">Dispatched</span>';
+  if(c==='delivered') return'<span class="pill pg">Delivered</span>';
+  if(c==='returned')  return'<span class="pill pr">Returned</span>';
+  return'<span class="pill pm">—</span>';
+}
+function extractCity(a){
+  const m=a.match(/([A-Z]{2,4})\s*-\s*([A-Z]{2,4})/);if(m)return m[2];
+  const cs=['Karachi','Lahore','Islamabad','Rawalpindi','Faisalabad','Multan','Peshawar','Quetta','Hyderabad','Sukkur'];
+  for(const c of cs){if(a.toLowerCase().includes(c.toLowerCase()))return c.slice(0,3).toUpperCase();}
+  return'—';
+}
+function fmtDate(r){
+  if(!r)return'—';
+  if(/^\d{5}/.test(r.trim())){const d=new Date((parseFloat(r)-25569)*86400*1000);return d.toLocaleDateString('en-GB');}
+  const p=r.split('/');if(p.length===3)return`${String(p[1]||p[0]).padStart(2,'0')}/${String(p[0]).padStart(2,'0')}/${p[2].split(' ')[0]}`;
+  return r;
+}
+
+// ═══════════ SAVE/LOAD ═══════════
+function saveConfig(){try{localStorage.setItem('mndz3_cfg',JSON.stringify({STORE,TOKEN,SHEET_ID,ADS_TAB,CRR_TAB,CS_TAB}));}catch(e){}}
+function loadConfig(){
+  try{
+    const c=JSON.parse(localStorage.getItem('mndz3_cfg')||'{}');
+    STORE=c.STORE||'';TOKEN=c.TOKEN||'';
+    SHEET_ID=c.SHEET_ID||'1OOcuvCYCX9Svl8nH3BpbJWeABoA4VWgq6e0M_UC5lZs';
+    ADS_TAB=c.ADS_TAB||'Think Spendin PW 26';
+    CRR_TAB=c.CRR_TAB||'Courier Data 26';
+    CS_TAB=c.CS_TAB||'Perf Report 26';
+    const m=localStorage.getItem('mndz3_m_'+todayKey());
+    if(m)manualData=JSON.parse(m);
+  }catch(e){}
+}
+function saveMStore(){try{localStorage.setItem('mndz3_m_'+todayKey(),JSON.stringify(manualData));}catch(e){}}
+
+// ═══════════ CONNECT ═══════════
+async function connectAll(){
+  STORE=document.getElementById('cfgStore').value.trim().replace('https://','').replace(/\/$/,'');
+  TOKEN=document.getElementById('cfgToken').value.trim();
+  SHEET_ID=document.getElementById('cfgSheet').value.trim();
+  ADS_TAB=document.getElementById('cfgAds').value.trim();
+  CRR_TAB=document.getElementById('cfgCrr').value.trim();
+  CS_TAB=document.getElementById('cfgCS').value.trim();
+  if(!STORE||!TOKEN){alert('Please enter Shopify store URL and API token');return;}
+  saveConfig();
+  document.getElementById('setupOverlay').innerHTML='<div class="setup-box" style="text-align:center"><div class="spinner"></div><div style="color:var(--accent);font-size:15px;font-weight:600">Connecting...</div><div style="color:var(--muted);font-size:12px;margin-top:6px">'+STORE+'</div></div>';
+  try{await loadAll();document.getElementById('setupOverlay').style.display='none';}
+  catch(e){document.getElementById('setupOverlay').innerHTML='<div class="setup-box"><div style="color:var(--red);font-size:14px;font-weight:600;margin-bottom:10px">Connection failed</div><div style="color:var(--muted);font-size:12px;margin-bottom:20px">'+e.message+'</div><button class="btn btn-s btn-full" onclick="location.reload()">Try Again</button></div>';}
+}
+
+async function loadAll(){
+  await Promise.allSettled([loadShopify(),fetchSheets()]);
+  renderDailyStats();
+  document.getElementById('todayDate').textContent=new Date().toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('lastUpd').textContent=new Date().toLocaleTimeString();
+}
+async function refreshAll(){
+  if(!STORE&&!SHEET_ID)return;
+  document.getElementById('lastUpd').textContent='Refreshing...';
+  await loadAll();
+}
+
+// ═══════════ SHOPIFY ═══════════
+async function shopFetch(ep){
+  const r=await fetch(`https://${STORE}/admin/api/2024-01${ep}`,{headers:{'X-Shopify-Access-Token':TOKEN,'Content-Type':'application/json'}});
+  if(!r.ok)throw new Error('Shopify '+r.status);
+  return r.json();
+}
+// ═══════════ DATE RANGE STATE ═══════════
+let _preset='today', _customFrom=null, _customTo=null;
+
+function getRange(){
+  const n=new Date();
+  if(_preset==='custom'&&_customFrom&&_customTo) return{from:new Date(_customFrom),to:new Date(_customTo)};
+  const f=new Date(n), t=new Date(n);
+  if(_preset==='today')    {f.setHours(0,0,0,0);t.setHours(23,59,59,999);}
+  else if(_preset==='yesterday'){f.setDate(f.getDate()-1);f.setHours(0,0,0,0);t.setDate(t.getDate()-1);t.setHours(23,59,59,999);}
+  else if(_preset==='2days'){f.setDate(f.getDate()-2);f.setHours(0,0,0,0);t.setDate(t.getDate()-2);t.setHours(23,59,59,999);}
+  else if(_preset==='7days'){f.setDate(f.getDate()-6);f.setHours(0,0,0,0);t.setHours(23,59,59,999);}
+  else if(_preset==='30days'){f.setDate(f.getDate()-29);f.setHours(0,0,0,0);t.setHours(23,59,59,999);}
+  else if(_preset==='mtd') {f.setDate(1);f.setHours(0,0,0,0);t.setHours(23,59,59,999);}
+  else                     {f.setHours(0,0,0,0);t.setHours(23,59,59,999);}
+  return{from:f,to:t};
+}
+
+function rangeLabel(){
+  const labels={today:'Today',yesterday:'Yesterday','2days':'Day Before Yesterday','7days':'Last 7 Days','30days':'Last 30 Days',mtd:'This Month (MTD)'};
+  if(_preset==='custom'&&_customFrom&&_customTo){
+    const f=new Date(_customFrom),t=new Date(_customTo);
+    const days=Math.round((t-f)/(86400*1000))+1;
+    return f.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})+' → '+t.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})+' ('+days+' day'+(days!==1?'s':'')+')';}
+  return labels[_preset]||_preset;
+}
+
+function setPreset(preset,el){
+  _preset=preset;_customFrom=null;_customTo=null;
+  document.querySelectorAll('.dp').forEach(b=>b.classList.remove('active'));
+  if(el)el.classList.add('active');
+  document.getElementById('dateFrom').value='';
+  document.getElementById('dateTo').value='';
+  document.getElementById('dActiveLbl').textContent='📅 '+rangeLabel();
+  applyDateRange();
+}
+
+function applyCustom(){
+  const fv=document.getElementById('dateFrom').value;
+  const tv=document.getElementById('dateTo').value;
+  if(!fv||!tv){alert('Please select both From and To dates');return;}
+  _preset='custom';
+  _customFrom=fv+'T00:00:00';
+  _customTo=tv+'T23:59:59';
+  document.querySelectorAll('.dp').forEach(b=>b.classList.remove('active'));
+  document.getElementById('dActiveLbl').textContent='📅 '+rangeLabel();
+  applyDateRange();
+}
+
+function applyDateRange(){
+  // Always update the date label
+  document.getElementById('todayDate').textContent=rangeLabel();
+  // Trigger the right reload based on current state
+  if(STORE==='demo'){
+    reloadDemo();
+  } else if(STORE && TOKEN){
+    reloadShopifyData();
+  } else {
+    // Not connected yet — just re-render whatever data is in memory with new date filter
+    renderDailyStats();
+    renderWeeklyTop20();
+    renderNoSaleDiagnosis();
+    renderSpark();
+  }
+}
+
+async function reloadShopifyData(){
+  const {from,to}=getRange();
+  document.getElementById('lastUpd').textContent='Loading...';
+  try{
+    const d=await shopFetch(`/orders.json?status=any&created_at_min=${from.toISOString()}&created_at_max=${to.toISOString()}&limit=250`);
+    ordersData=d.orders||[];
+    // If exactly 250 returned, try to get more (pagination)
+    if(ordersData.length===250){
+      try{
+        const d2=await shopFetch(`/orders.json?status=any&created_at_min=${from.toISOString()}&created_at_max=${to.toISOString()}&limit=250&since_id=${ordersData[ordersData.length-1].id}`);
+        if(d2.orders&&d2.orders.length)ordersData=[...ordersData,...d2.orders];
+      }catch(e){}
+    }
+    setBadge('s','live',ordersData.length+' orders · '+rangeLabel());
+    weeklyOrdersData=ordersData;
+    document.getElementById('todayDate').textContent=rangeLabel();
+    document.getElementById('weeklyRange').textContent=rangeLabel();
+    document.getElementById('dActiveLbl').textContent='📅 '+rangeLabel();
+    renderDailyStats();
+    renderWeeklyTop20();
+    renderNoSaleDiagnosis();
+    renderSpark();
+    document.getElementById('lastUpd').textContent=new Date().toLocaleTimeString();
+  }catch(e){setBadge('s','error','Error');console.error(e);}
+}
+
+async function loadShopify(){
+  try{
+    const {from,to}=getRange();
+    const d=await shopFetch(`/orders.json?status=any&created_at_min=${from.toISOString()}&created_at_max=${to.toISOString()}&limit=250`);
+    ordersData=d.orders||[];
+    const p=await shopFetch('/products.json?limit=250');
+    allProducts=p.products||[];
+    setBadge('s','live',ordersData.length+' orders');
+    renderProducts();
+    loadWeeklyOrders();
+  }catch(e){setBadge('s','error','Error');throw e;}
+}
+async function loadProducts(){
+  try{const d=await shopFetch('/products.json?limit=250');allProducts=d.products||[];renderProducts();}
+  catch(e){console.error(e);}
+}
+
+// ═══════════ SHEETS CSV ═══════════
+// ═══════════════════════════════════════════════════
+// GOOGLE SHEETS FETCH
+// Tries 4 methods in order until one works:
+// 1. Direct fetch (works from https origins)
+// 2. corsproxy.io
+// 3. allorigins.win
+// 4. htmldriven proxy
+// ═══════════════════════════════════════════════════
+function parseCSV(txt){
+  return txt.split('\n').filter(l=>l.trim()).map(line=>{
+    const row=[];let inQ=false,cell='';
+    for(let i=0;i<line.length;i++){
+      const ch=line[i];
+      if(ch==='"'&&line[i+1]==='"'){cell+='"';i++;}
+      else if(ch==='"'){inQ=!inQ;}
+      else if(ch===','&&!inQ){row.push(cell.trim());cell='';}
+      else{cell+=ch;}
+    }
+    row.push(cell.trim());return row;
+  });
+}
+
+function isValidCSV(txt){
+  if(!txt || typeof txt!=='string' || txt.length < 10) return false;
+  if(txt.includes('<!DOCTYPE')||txt.includes('<html')||txt.includes('<HTML')) return false;
+  // Check if it's a JSON error from Google
+  if(txt.includes('"errors"')||txt.includes('"error"')) return false;
+  return true;
+}
+
+function debugSheetURL(tab){
+  return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tab)}`;
+}
+
+async function tryFetch(url){
+  const r = await fetch(url, {mode:'cors'});
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  const txt = await r.text();
+  if(!isValidCSV(txt)) throw new Error('Not CSV');
+  return txt;
+}
+
+async function fetchSheetJSONP(sheetId, tab){
+  const googleUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tab)}`;
+  const encoded   = encodeURIComponent(googleUrl);
+
+  // Method 1: Direct (works from https pages / Google Drive)
+  try{
+    const txt = await tryFetch(googleUrl);
+    return parseCSV(txt);
+  }catch(e){ console.log('Method 1 failed:', e.message); }
+
+  // Method 2: corsproxy.io
+  try{
+    const txt = await tryFetch(`https://corsproxy.io/?${googleUrl}`);
+    return parseCSV(txt);
+  }catch(e){ console.log('Method 2 failed:', e.message); }
+
+  // Method 3: allorigins.win
+  try{
+    const proxyUrl = `https://api.allorigins.win/raw?url=${encoded}`;
+    const r = await fetch(proxyUrl);
+    if(r.ok){
+      const txt = await r.text();
+      if(isValidCSV(txt)) return parseCSV(txt);
+      console.log('Method 3 got non-CSV:', txt.slice(0,100));
+    }
+  }catch(e){ console.log('Method 3 failed:', e.message); }
+
+  // Method 4: htmldriven proxy
+  try{
+    const r = await fetch(`https://thingproxy.freeboard.io/fetch/${googleUrl}`);
+    if(r.ok){
+      const txt = await r.text();
+      if(isValidCSV(txt)) return parseCSV(txt);
+    }
+  }catch(e){ console.log('Method 4 failed:', e.message); }
+
+  // Method 5: JSONP script tag (last resort)
+  return new Promise((resolve, reject)=>{
+    const cbName = 'gs_cb_' + Math.random().toString(36).slice(2);
+    const script = document.createElement('script');
+    const timeout = setTimeout(()=>{
+      delete window[cbName];
+      try{document.body.removeChild(script);}catch(e){}
+      reject(new Error('All methods failed for tab: '+tab+'. Check sheet is set to Anyone with link can view.'));
+    }, 10000);
+
+    window[cbName] = function(data){
+      clearTimeout(timeout);
+      delete window[cbName];
+      try{document.body.removeChild(script);}catch(e){}
+      try{
+        const rows=[];
+        const table=data.table;
+        if(!table) return resolve([]);
+        const header=table.cols.map(col=>(col.label||'').trim()||(col.id||'').trim()||'');
+        rows.push(header);
+        (table.rows||[]).forEach(r=>{
+          const row=(r.c||[]).map(cell=>{
+            if(!cell||cell.v===null||cell.v===undefined)return'';
+            if(cell.f!==undefined&&cell.f!==null&&cell.f!=='')return String(cell.f);
+            const v=cell.v;
+            if(typeof v==='string'&&v.startsWith('Date(')){
+              const pts=v.slice(5,-1).split(',').map(Number);
+              return new Date(pts[0],pts[1],pts[2]).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+            }
+            return String(v);
+          });
+          rows.push(row);
+        });
+        resolve(rows);
+      }catch(e){reject(e);}
+    };
+
+    const jsonpUrl=`https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&callback=${cbName}&sheet=${encodeURIComponent(tab)}`;
+    script.src=jsonpUrl;
+    script.onerror=()=>{
+      clearTimeout(timeout);
+      delete window[cbName];
+      reject(new Error('All fetch methods failed for: '+tab));
+    };
+    document.body.appendChild(script);
+  });
+}
+
+async function fetchSheets(){
+  setBadge('a','amber','Fetching...');
+  setBadge('c','amber','Fetching...');
+  setBadge('cs','amber','Fetching...');
+
+  // Fetch each tab independently so one failure doesn't block others
+  const results = await Promise.allSettled([
+    fetchSheetJSONP(SHEET_ID, ADS_TAB),
+    fetchSheetJSONP(SHEET_ID, CRR_TAB),
+    fetchSheetJSONP(SHEET_ID, CS_TAB)
+  ]);
+
+  const [adsR, crrR, csR] = results;
+
+  if(adsR.status==='fulfilled' && adsR.value.length){
+    processAds(adsR.value);
+  } else {
+    const msg = adsR.reason ? adsR.reason.message : 'No data';
+    const hint = msg.includes('Google Drive') ? 'Open from Google Drive' : msg.includes('Timeout') ? 'Timeout' : 'Error';
+    setBadge('a','error', hint);
+    console.error('Ads sheet error:', adsR.reason);
+  }
+
+  if(crrR.status==='fulfilled' && crrR.value.length){
+    processCourier(crrR.value);
+  } else {
+    const msg = crrR.reason ? crrR.reason.message : 'No data';
+    setBadge('c','error', msg.includes('Timeout')?'Timeout':'Error — check sheet name');
+    console.error('Courier sheet error:', crrR.reason);
+  }
+
+  if(csR.status==='fulfilled' && csR.value.length){
+    processCS(csR.value);
+  } else {
+    const msg = csR.reason ? csR.reason.message : 'No data';
+    setBadge('cs','error', msg.includes('Timeout')?'Timeout':'Error — check sheet name');
+    console.error('CS sheet error:', csR.reason);
+  }
+}
+
+// ═══════════ ADS PROCESSING ═══════════
+function processAds(rows){
+  // The sheet has TWO header rows — one for April (April/Date) and one for May (May/Date)
+  // We want the LAST one (most recent month). Each header row has Meta/Spend etc.
+  // Column structure: [April/Date or May/Date] [Shopify cols...] [Meta/Spend] [Meta/Orders]...
+  let hi=-1,hdr=[];
+  for(let i=0;i<rows.length;i++){
+    const joined=rows[i].join('|').toLowerCase();
+    // Match header rows that contain both a date column and meta/spend
+    if(joined.includes('meta/spend')||(joined.includes('meta')&&joined.includes('spend'))){
+      hi=i;hdr=rows[i]; // keep going to find the LAST one (May comes after April)
+    }
+  }
+  if(hi===-1){setBadge('a','error','Header not found');return;}
+
+  // Find column indices — handle variations like "Meta/Spend", "Meta Spend", "meta/spend"
+  const col=n=>{
+    const nl=n.toLowerCase().replace(/[\s\/\-]/g,'');
+    let idx=hdr.findIndex(h=>h.toLowerCase().replace(/[\s\/\-]/g,'')===nl);
+    if(idx===-1) idx=hdr.findIndex(h=>h.toLowerCase().replace(/[\s\/\-]/g,'').includes(nl));
+    return idx;
+  };
+
+  // Date column: could be "April/Date", "May/Date", "Date", "date"
+  let dateCol=hdr.findIndex(h=>/date/i.test(h));
+
+  adsIdx={
+    date:dateCol,
+    mS:col('meta/spend'),mO:col('meta/orders'),mR:col('meta/revenue'),mRoas:col('meta/roas'),
+    gS:col('google/spend'),gO:col('google/orders'),gR:col('google/revenue'),gRoas:col('google/roas'),
+    tS:col('tiktok/spend'),tO:col('tiktok/orders'),tR:col('tiktok/revenue'),tRoas:col('tiktok/roas'),
+    sS:col('snapchat/spend'),sO:col('snapchat/orders'),sR:col('snapchat/revenue'),sRoas:col('snapchat/roas'),
+  };
+
+  // Get all data rows after this header — filter for rows with a date and spend value
+  const dr=rows.slice(hi+1).filter(r=>{
+    const d=r[adsIdx.date]||'';
+    const s=r[adsIdx.mS>=0?adsIdx.mS:0]||'';
+    // Must have a date, and at least some spend somewhere in the row
+    if(!d.trim()) return false;
+    if(d.toLowerCase().includes('date')||d.toLowerCase().includes('platform')) return false;
+    // Has any spend value
+    const rowText=r.join('');
+    return rowText.replace(/[^0-9]/g,'').length > 0;
+  });
+
+  if(!dr.length){setBadge('a','error','No rows after header');return;}
+
+  // Filter to rows with actual spend data (not empty/zero rows)
+  const validDr=dr.filter(r=>{
+    const s=r[adsIdx.mS]||'';
+    return s.trim()&&!s.includes('#DIV')&&!s.includes('#')&&nc(s)>0;
+  });
+
+  const finalDr=validDr.length>0?validDr:dr;
+  adsTrend=finalDr.slice(-7);
+  adsLatest=finalDr[finalDr.length-1];
+  document.getElementById('adsDateLbl').textContent='Most recent: '+(adsLatest[adsIdx.date]||'—');
+  setBadge('a','live',finalDr.length+' days · '+hdr[dateCol]);
+  renderAds();
+}
+
+function renderAds(){
+  if(!adsLatest||!adsIdx)return;
+  const r=adsLatest,i=adsIdx;
+  const plats=[
+    {n:'Meta',ic:'im',lt:'M',s:nc(r[i.mS]),o:nc(r[i.mO]),rv:nc(r[i.mR]),roas:nc(r[i.mRoas])},
+    {n:'Google',ic:'ig',lt:'G',s:nc(r[i.gS]),o:nc(r[i.gO]),rv:nc(r[i.gR]),roas:nc(r[i.gRoas])},
+    {n:'TikTok',ic:'it',lt:'T',s:nc(r[i.tS]),o:nc(r[i.tO]),rv:nc(r[i.tR]),roas:nc(r[i.tRoas])},
+    {n:'Snapchat',ic:'is',lt:'S',s:nc(r[i.sS]),o:nc(r[i.sO]),rv:nc(r[i.sR]),roas:nc(r[i.sRoas])},
+  ];
+  const totS=plats.reduce((a,p)=>a+p.s,0),totR=plats.reduce((a,p)=>a+p.rv,0),totO=plats.reduce((a,p)=>a+p.o,0);
+  const totRoas=totS>0?totR/totS:0;
+  // cache for report + daily stats
+  window._adsTot={spend:totS,rev:totR,orders:totO,roas:totRoas};
+
+  let html=plats.map(p=>{
+    const cpa=p.o>0?Math.round(p.s/p.o):0;
+    return`<div class="pc">
+      <div class="pn"><div class="pi ${p.ic}">${p.lt}</div>${p.n}${p.s===0?'<span class="pill pm" style="margin-left:auto">No spend</span>':''}</div>
+      <div class="kr">
+        <div><div class="kl">Spend</div><div class="kv">${fPKR(p.s)}</div></div>
+        <div><div class="kl">Revenue</div><div class="kv amber">${fPKR(p.rv)}</div></div>
+      </div>
+      <div class="div"></div>
+      <div class="kr">
+        <div><div class="kl">ROAS</div><div class="kv ${rcol(p.roas)}">${p.roas?p.roas.toFixed(2)+'x':'—'}</div></div>
+        <div><div class="kl">Orders</div><div class="kv">${p.o||'—'}</div></div>
+      </div>
+      <div style="margin-top:8px"><div class="kl">CPA</div><div style="font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:2px">${cpa?'PKR '+fmt(cpa):'—'}</div></div>
+    </div>`;
+  }).join('');
+  html+=`<div class="pc" style="border-color:var(--accent-dim)">
+    <div class="pn"><div class="pi ix">Σ</div>Combined</div>
+    <div class="kr">
+      <div><div class="kl">Total Spend</div><div class="kv amber">${fPKR(totS)}</div></div>
+      <div><div class="kl">Total Revenue</div><div class="kv green">${fPKR(totR)}</div></div>
+    </div>
+    <div class="div"></div>
+    <div class="kr">
+      <div><div class="kl">Blended ROAS</div><div class="kv ${rcol(totRoas)}">${totRoas>0?totRoas.toFixed(2)+'x':'—'}</div></div>
+      <div><div class="kl">Orders</div><div class="kv">${totO||'—'}</div></div>
+    </div>
+    <div style="margin-top:8px"><div class="kl">Blended CPA</div><div style="font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:2px">${totO>0?'PKR '+fmt(Math.round(totS/totO)):'—'}</div></div>
+  </div>`;
+  document.getElementById('platCards').innerHTML=html;
+
+  const rc2=v=>`color:${v>=5?'var(--green)':v>=3?'var(--accent)':v>0?'var(--red)':'var(--muted2)'}`;
+  document.getElementById('adsTbl').innerHTML=adsTrend.map(row=>{
+    const ms=nc(row[i.mS]),mr=nc(row[i.mRoas]);
+    const gs=nc(row[i.gS]),gr=nc(row[i.gRoas]);
+    const ts=nc(row[i.tS]),tr=nc(row[i.tRoas]);
+    const ss=nc(row[i.sS]),sr=nc(row[i.sRoas]);
+    const totS2=ms+gs+ts+ss,totRv2=nc(row[i.mR])+nc(row[i.gR])+nc(row[i.tR])+nc(row[i.sR]);
+    const tR2=totS2>0?totRv2/totS2:0;
+    return`<tr>
+      <td style="color:var(--text);font-weight:500">${row[i.date]||'—'}</td>
+      <td class="tm">${fPKR(ms)}</td><td class="tm" style="${rc2(mr)}">${mr?mr.toFixed(1)+'x':'—'}</td>
+      <td class="tm">${fPKR(gs)}</td><td class="tm" style="${rc2(gr)}">${gr?gr.toFixed(1)+'x':'—'}</td>
+      <td class="tm">${fPKR(ts)}</td><td class="tm" style="${rc2(tr)}">${tr?tr.toFixed(1)+'x':'—'}</td>
+      <td class="tm">${fPKR(ss)}</td><td class="tm" style="${rc2(sr)}">${sr?sr.toFixed(1)+'x':'—'}</td>
+      <td class="tm" style="color:var(--accent);font-weight:600">${fPKR(totS2)}</td>
+      <td class="tm" style="${rc2(tR2)};font-weight:600">${tR2>0?tR2.toFixed(1)+'x':'—'}</td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="11" class="nodata">No data</td></tr>';
+}
+
+// ═══════════ COURIER PROCESSING ═══════════
+function processCourier(rows){
+  let hi=-1,hdr=[];
+  for(let i=0;i<rows.length;i++){
+    const j=rows[i].join('|').toLowerCase();
+    // Look for courier header: has CN# and Status columns
+    if((j.includes('cn #')||j.includes('cn#')||j.includes('cn '))&&j.includes('status')){hi=i;hdr=rows[i];break;}
+    // Fallback: has ship date and customer and status
+    if(j.includes('ship date')&&j.includes('customer')&&j.includes('status')){hi=i;hdr=rows[i];break;}
+  }
+  if(hi===-1){
+    // Last fallback: find any row with 'status' that also has date-like content
+    for(let i=0;i<rows.length;i++){
+      const j=rows[i].join('|').toLowerCase();
+      if(j.includes('status')&&(j.includes('date')||j.includes('customer'))){hi=i;hdr=rows[i];break;}
+    }
+  }
+  if(hi===-1){setBadge('c','error','Header not found');return;}
+  const ci=n=>hdr.findIndex(h=>h.toLowerCase().trim().includes(n.toLowerCase()));
+  const idx={cn:ci('cn'),sd:ci('ship date'),cust:ci('customer'),addr:ci('address'),prod:ci('product'),cod:ci('cod'),att:ci('attempts'),sts:ci('status')};
+  allCrr=rows.slice(hi+1).filter(r=>r[idx.cn]&&r[idx.cn].trim()&&!/^[a-z\s]+$/i.test(r[idx.cn].trim())&&r[idx.cn].trim()!=='—').map(r=>{
+    const raw=r[idx.sts]||'';const m=statusMap(raw);
+    const addr=r[idx.addr]||'';const city=extractCity(addr);
+    return{cn:r[idx.cn]||'',sd:fmtDate(r[idx.sd]||''),cust:r[idx.cust]||'',city,prod:(r[idx.prod]||'').slice(0,55),cod:r[idx.cod]||'0',att:r[idx.att]||'0',raw,m};
+  });
+  filtCrr=[...allCrr];crrPage=1;
+  document.getElementById('cnCount').textContent=`(${allCrr.length} CNs)`;
+  renderCrrSummary();renderCrrTable();
+  setBadge('c','live',allCrr.length+' CNs');
+}
+function renderCrrSummary(){
+  const cnt={dispatched:0,delivered:0,returned:0,booked:0,total:0};
+  const bd={};
+  allCrr.forEach(r=>{cnt.total++;const c=r.m.c;if(!c)cnt.booked++;else cnt[c]=(cnt[c]||0)+1;bd[r.m.l]=(bd[r.m.l]||0)+1;});
+  const active=cnt.dispatched+cnt.delivered+cnt.returned;
+  const delR=active>0?Math.round(cnt.delivered/active*100):0;
+  const rtoR=active>0?Math.round(cnt.returned/active*100):0;
+  window._crrCnt=cnt;
+  document.getElementById('crrCards').innerHTML=`
+    <div class="cc"><div class="ccl">Total CNs</div><div class="ccv">${cnt.total}</div><div class="ccs">All shipments</div></div>
+    <div class="cc" style="border-color:var(--blue-dim)"><div class="ccl">Dispatched</div><div class="ccv" style="color:var(--blue)">${cnt.dispatched}</div><div class="ccs">Arrived + Out for Delivery</div></div>
+    <div class="cc" style="border-color:var(--green-dim)"><div class="ccl">Delivered</div><div class="ccv" style="color:var(--green)">${cnt.delivered}</div><div class="ccs">Rate: ${delR}%</div></div>
+    <div class="cc" style="border-color:var(--red-dim)"><div class="ccl">RTO / Returned</div><div class="ccv" style="color:var(--red)">${cnt.returned}</div><div class="ccs">RTO: ${rtoR}%</div></div>
+    <div class="cc"><div class="ccl">Booked (Excl.)</div><div class="ccv" style="color:var(--muted)">${cnt.booked}</div><div class="ccs">Not yet picked up</div></div>`;
+  const maxC=Math.max(...Object.values(bd),1);
+  const barCol={'Booked':'var(--muted2)','Arrived':'var(--blue)','Out For Delivery':'var(--accent)','Delivered':'var(--green)','Returned':'var(--red)'};
+  document.getElementById('statusBars').innerHTML=Object.entries(bd).sort((a,b)=>b[1]-a[1]).map(([l,c])=>`
+    <div class="srow">
+      <div class="sname">${l}</div>
+      <div class="btrack"><div class="bfill" style="width:${Math.round(c/maxC*100)}%;background:${barCol[l]||'var(--orange)'}"></div></div>
+      <div class="scnt">${c}</div>
+      <div class="spct">${Math.round(c/cnt.total*100)}%</div>
+    </div>`).join('');
+  const todayStr=new Date().toLocaleDateString('en-GB');
+  const tdCNs=allCrr.filter(r=>r.sd===todayStr&&r.m.c);
+  const tdBkd=allCrr.filter(r=>r.sd===todayStr&&!r.m.c);
+  document.getElementById('todayShip').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px">
+      <div><div class="ccl">Dispatched Today</div><div style="font-size:24px;font-weight:700;font-family:var(--mono);color:var(--blue)">${tdCNs.length}</div></div>
+      <div><div class="ccl">Booked Today</div><div style="font-size:24px;font-weight:700;font-family:var(--mono);color:var(--muted)">${tdBkd.length}</div></div>
+    </div>
+    <div style="font-size:10px;color:var(--muted2);font-family:var(--mono)">Ship date = ${todayStr}</div>`;
+}
+function filterCrr(){
+  const q=document.getElementById('cnSearch').value.toLowerCase();
+  filtCrr=allCrr.filter(r=>r.cn.toLowerCase().includes(q)||r.cust.toLowerCase().includes(q)||r.city.toLowerCase().includes(q)||r.prod.toLowerCase().includes(q)||r.raw.toLowerCase().includes(q));
+  crrPage=1;renderCrrTable();
+}
+function renderCrrTable(){
+  const start=(crrPage-1)*PAGE;const page=filtCrr.slice(start,start+PAGE);
+  const tbody=document.getElementById('crrTbl');
+  if(!page.length){tbody.innerHTML='<tr><td colspan="9" class="nodata">No shipments found</td></tr>';document.getElementById('crrPager').innerHTML='';return;}
+  tbody.innerHTML=page.map(r=>`<tr>
+    <td class="tm" style="color:var(--accent)">${r.cn}</td>
+    <td class="tm tmut">${r.sd}</td>
+    <td style="font-weight:500">${r.cust}</td>
+    <td><span class="pill pm">${r.city}</span></td>
+    <td class="tmut" style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${r.prod}">${r.prod}</td>
+    <td class="tm">${r.cod&&r.cod!=='0'?'PKR '+fmt(parseInt(r.cod)||0):'—'}</td>
+    <td class="tm tmut">${r.att}</td>
+    <td><span class="pill ${r.m.p}">${r.m.l}</span></td>
+    <td>${cPill(r.m.c)}</td>
+  </tr>`).join('');
+  const tp=Math.ceil(filtCrr.length/PAGE);
+  document.getElementById('crrPager').innerHTML=`
+    <button onclick="crrPage--;renderCrrTable()" ${crrPage<=1?'disabled':''}>← Prev</button>
+    <span>Page ${crrPage} of ${tp} · ${filtCrr.length} CNs</span>
+    <button onclick="crrPage++;renderCrrTable()" ${crrPage>=tp?'disabled':''}>Next →</button>`;
+}
+
+// ═══════════ CS PROCESSING ═══════════
+// Sheet structure: Agent rows with date columns 1-31
+// Row pattern: "Agent 1 A" | "Chats" | [date1] ... [date31] | Total
+// Then: EWH | Exch Count, Total Dispatch, Total Disp Unit, Return Units
+// Order Status section: "Landed MTD", "Total Dispatched", "Delivered", "Pending", "Cancellations MTD", "Returns MTD"
+function processCS(rows){
+  const now=new Date();
+  const todayDay=now.getDate();
+  const currentMonth=now.toLocaleString('en-US',{month:'long'}).toLowerCase(); // e.g. "may"
+  const currentMonthShort=now.toLocaleString('en-US',{month:'short'}).toLowerCase(); // e.g. "may"
+  const currentYear=String(now.getFullYear()).slice(-2); // "26"
+  csData={agents:[],orderStatus:{},ewh:{}};
+
+  // ── STEP 1: Find the start row of the CURRENT month's CS section ──
+  // The sheet labels each month's CS block with a cell like:
+  // "May2026 CS Data" or "April CS Data" or "May 26" etc.
+  // We scan all rows and find the LAST occurrence whose label matches current month
+  // (last = most recent, so if June is added later it'll pick June)
+  let sectionStart=0;
+  const monthNames={
+    january:'jan',february:'feb',march:'mar',april:'apr',may:'may',
+    june:'jun',july:'jul',august:'aug',september:'sep',october:'oct',
+    november:'nov',december:'dec'
+  };
+
+  for(let i=0;i<rows.length;i++){
+    const rowText=rows[i].join(' ').toLowerCase();
+    // Match patterns like "may2026 cs data", "may 26", "may cs data", "april cs data"
+    const matchesCurrent=(
+      rowText.includes(currentMonth)&&(rowText.includes('cs data')||rowText.includes('cs')||rowText.includes('26'))
+    )||(
+      rowText.includes(currentMonthShort)&&rowText.includes('26')
+    );
+    if(matchesCurrent){
+      sectionStart=i; // keep updating — we want the LAST match (most recent month)
+    }
+  }
+  // If no month label found at all, start from row 0 (graceful fallback)
+
+  // ── STEP 2: Within the current month section, find the Dates row ──
+  // The Dates row looks like: [..., "Dates", "1", "2", "3", ... "31", "Total"]
+  // or: ["Dates", "1", "2", ...]
+  let dateColIdx=-1;
+  for(let i=sectionStart;i<Math.min(sectionStart+60,rows.length);i++){
+    const r=rows[i];
+    const joined=r.join('|');
+    // Look for a row that has "Dates" and sequential numbers 1..5
+    if((r[0]==='Dates'||r[1]==='Dates'||r[8]==='Dates'||r[9]==='Dates')){
+      const datesPos=r.findIndex(c=>c.trim()==='Dates');
+      // Today's column is datesPos + todayDay
+      dateColIdx=datesPos+todayDay;
+      break;
+    }
+    // Also match pattern where cells are "1","2","3" sequentially after a label
+    if(r[2]==='1'&&r[3]==='2'&&r[4]==='3'){
+      dateColIdx=2+(todayDay-1);
+      break;
+    }
+  }
+
+  // ── STEP 3: Helper — get the Total column (last numeric cell) ──
+  const getTotCol=(row)=>{
+    // The Total column label exists — find it, or fall back to last numeric
+    const ti=row.findIndex(c=>c.trim().toLowerCase()==='total');
+    if(ti>0)return ti;
+    for(let k=row.length-1;k>=0;k--){if(row[k]&&row[k].trim()&&!isNaN(parseFloat(row[k].replace(/,/g,''))))return k;}
+    return row.length-1;
+  };
+
+  // ── STEP 4: Scan from sectionStart onwards for agents, EWH, order status ──
+  let i=sectionStart;
+  // We'll also capture the ORDER STATUS from the current month's section.
+  // Order Status rows appear BEFORE the CS section label in the sheet,
+  // so we also scan a window before sectionStart for "Landed MTD" etc.
+  // But actually the Landed MTD for May is the one right after "Operations Data For May"
+  // which is close to but before the CS section. Let's scan a wider range.
+  const scanStart=Math.max(0,sectionStart-80);
+  const scanEnd=Math.min(rows.length,sectionStart+150);
+
+  // Track if we're inside current month's agent section
+  let inCurrentSection=false;
+
+  for(let i=scanStart;i<scanEnd;i++){
+    const r=rows[i];
+    const a0=(r[0]||'').trim();
+    const a0l=a0.toLowerCase();
+
+    // Detect when we enter the current month's section
+    const rowText=rows[i].join(' ').toLowerCase();
+    const matchesCurrent=(
+      rowText.includes(currentMonth)&&(rowText.includes('cs data')||rowText.includes('cs')||rowText.includes('26'))
+    )||(rowText.includes(currentMonthShort)&&rowText.includes('26'));
+    if(matchesCurrent&&i>=sectionStart-5){inCurrentSection=true;}
+
+    // Order Status rows — read from current month's "Operations Data For [Month]" section
+    // These rows have the pattern: "Landed MTD", value in col 3 (No Of Orders) or col 4 (Achieved Value)
+    const isOrderSection=rowText.includes('operations data for '+currentMonth)||rowText.includes('ecom mendeez')||rowText.includes('order status');
+    if(a0l.includes('landed mtd')&&i>=sectionStart-80){csData.orderStatus.landed=nc(r[3]);}
+    if((a0l.includes('total dispach')||a0l.includes('total dispatch'))&&i>=sectionStart-80){csData.orderStatus.dispatched=nc(r[3]);}
+    if(a0l.includes('delivered to customer')&&i>=sectionStart-80){csData.orderStatus.delivered=nc(r[3]);}
+    if(a0l.includes('pending orders')&&i>=sectionStart-80){csData.orderStatus.pending=nc(r[3]);}
+    if(a0l.includes('cancelations mtd')&&i>=sectionStart-80){csData.orderStatus.cancel=nc(r[3]);}
+    if(a0l.includes('mtd returns')&&i>=sectionStart-80){csData.orderStatus.returns=nc(r[3]);}
+
+    // Only read agent + EWH data from WITHIN the current month section
+    if(!inCurrentSection)continue;
+
+    // Agent block
+    if(a0l.includes('agent')||a0l.includes('nimra')||a0l.includes('abdullah')){
+      const agentName=a0;
+      const agentData={name:agentName,chats:0,inbound:0,outbound:0,returns:0,complaints:0,todayChats:0,todayOut:0};
+      let j=i;
+      while(j<scanEnd&&j<i+8){
+        const row=rows[j];
+        const metric=((row[1]||row[0])||'').toLowerCase().trim();
+        const totCol=getTotCol(row);
+        const totVal=nc(row[totCol]);
+        const todayVal=dateColIdx>0&&dateColIdx<row.length?nc(row[dateColIdx]):0;
+        if(metric.includes('chat')){agentData.chats=totVal;agentData.todayChats=todayVal;}
+        else if(metric.includes('outbound')||metric.includes('out bound')){agentData.outbound=totVal;agentData.todayOut=todayVal;}
+        else if(metric.includes('inbound')){agentData.inbound=totVal;}
+        else if(metric.includes('r/ return')||metric.includes('r/return')){agentData.returns=totVal;}
+        else if(metric.includes('complaint')){agentData.complaints=totVal;}
+        j++;
+        if(j<scanEnd){const nxt=(rows[j][0]||'').trim();
+          if((nxt.toLowerCase().includes('agent')&&nxt!==a0)||nxt.toLowerCase().includes('ewh')||nxt.toLowerCase().includes('e.com'))break;}
+      }
+      if(agentData.chats>0||agentData.outbound>0||agentData.inbound>0)csData.agents.push(agentData);
+      i=j-1;continue;
+    }
+
+    // EWH / Warehouse — same logic, only from current month section
+    if(a0l.includes('e.com wh')||a0l==='ewh'||(a0l===''&&(r[1]||'').toLowerCase().includes('e.com wh'))){
+      // The EWH summary row is: [blank | "E.COM WH" | Exch Count | Total Dispatch | Total Disp unit | Rtrn Units]
+      // followed by a data row: [blank | blank | value | value | value | value]
+      const dataRow=rows[i+1]||[];
+      csData.ewh.exch=nc(dataRow[2]||r[2]);
+      csData.ewh.dispVal=nc(dataRow[3]||r[3]);
+      csData.ewh.dispUnits=nc(dataRow[4]||r[4]);
+      csData.ewh.returnUnits=nc(dataRow[5]||r[5]);
+      i++;continue;
+    }
+    // Also handle the inline EWH row: [blank | value | "5,772,966" | 2904 | 137]
+    if(a0===''&&(r[1]||'').trim()&&!isNaN(parseFloat((r[1]||'').replace(/,/g,'')))&&nc(r[3])>100){
+      if(!csData.ewh.dispVal){
+        csData.ewh.exch=nc(r[1]);csData.ewh.dispVal=nc(r[2]);
+        csData.ewh.dispUnits=nc(r[3]);csData.ewh.returnUnits=nc(r[4]);
+      }
+    }
+  }
+
+  setBadge('cs','live',csData.agents.length+' agents · '+currentMonth.charAt(0).toUpperCase()+currentMonth.slice(1));
+  renderCS();
+}
+
+function renderCS(){
+  // Agent table
+  if(csData.agents.length){
+    const rows=csData.agents.map(a=>`
+      <tr>
+        <td style="font-weight:600">${a.name}</td>
+        <td class="tm">${fmt(a.chats)}</td>
+        <td class="tm">${fmt(a.inbound)}</td>
+        <td class="tm">${fmt(a.outbound)}</td>
+        <td class="tm">${fmt(a.returns)}</td>
+        <td class="tm">${a.complaints>0?fmt(a.complaints):'—'}</td>
+        <td class="tm" style="color:var(--accent)">${a.todayChats>0?a.todayChats:'—'}</td>
+        <td class="tm" style="color:var(--accent)">${a.todayOut>0?a.todayOut:'—'}</td>
+      </tr>`).join('');
+    document.getElementById('csAgentTable').innerHTML=`<table>
+      <thead><tr><th>Agent</th><th>Chats MTD</th><th>Inbound Calls</th><th>Outbound Calls</th><th>R/Returns</th><th>Complaints</th><th>Chats Today</th><th>Outbound Today</th></tr></thead>
+      <tbody>${rows}</tbody></table>`;
+  }else{
+    document.getElementById('csAgentTable').innerHTML='<div class="nodata">No agent data found in sheet</div>';
+  }
+
+  // Order stats
+  const os=csData.orderStatus;
+  setV('cs-landed',os.landed?fmt(os.landed):'—','amber');
+  setV('cs-dispatched',os.dispatched?fmt(os.dispatched):'—','blue');
+  setV('cs-delivered',os.delivered?fmt(os.delivered):'—','green');
+  setV('cs-pending',os.pending?fmt(os.pending):'—','');
+  setV('cs-cancel',os.cancel?fmt(os.cancel):'—',os.cancel>50?'red':'');
+  setV('cs-returns',os.returns?fmt(os.returns):'—',os.returns>30?'red':'');
+
+  // Warehouse
+  const ewh=csData.ewh;
+  document.getElementById('cs-wh-val').textContent=ewh.dispVal?fPKR(ewh.dispVal):'—';
+  document.getElementById('cs-wh-units').textContent=ewh.dispUnits?fmt(ewh.dispUnits):'—';
+  document.getElementById('cs-wh-rtn').textContent=ewh.returnUnits?fmt(ewh.returnUnits):'—';
+  document.getElementById('cs-wh-exch').textContent=ewh.exch?fmt(ewh.exch):'—';
+}
+
+// ═══════════ DAILY STATS ═══════════
+function renderDailyStats(){
+  const rev=ordersData.reduce((s,o)=>s+parseFloat(o.total_price||0),0);
+  const ords=ordersData.length;const aov=ords>0?Math.round(rev/ords):0;
+  const adT=window._adsTot||{spend:0,rev:0,roas:0};
+  const cntCrr=window._crrCnt||{dispatched:0,returned:0};
+  // CS confirmation — use sheet data if available, fall back to manual override
+  const called=manualData.called||0,confirmed=manualData.confirmed||0;
+  const confRate=called>0?Math.round(confirmed/called*100):0;
+
+  setV('s-rev','PKR '+fmt(rev),'amber');
+  setV('s-ord',ords,'');
+  setV('s-aov','PKR '+fmt(aov),'');
+  const roas=adT.spend>0?adT.rev/adT.spend:0;
+  setV('s-roas',roas>0?roas.toFixed(1)+'x':'—',rcol(roas));
+  setV('s-spend',adT.spend?'PKR '+fmt(adT.spend):'—','');
+  setV('s-conf',confRate>0?confRate+'%':'—',confRate>=90?'green':confRate>0?'amber':'muted');
+  setV('s-disp',cntCrr.dispatched||'—','blue');
+  setV('s-rto',cntCrr.returned||'—',cntCrr.returned>10?'red':'');
+
+  renderSpark();renderAlerts(rev,ords,roas,cntCrr.returned);
+}
+// ── weeklyOrdersData: stores last 7 days orders (loaded separately) ──
+let weeklyOrdersData = [];
+
+function renderTopProds(){
+  // TODAY top 5 — kept for report building only, not shown in UI anymore
+  // (UI now shows weekly top 20 via renderWeeklyTop20)
+}
+
+async function loadWeeklyOrders(){
+  // Use the currently selected date range
+  const {from,to}=getRange();
+  try{
+    const d=await shopFetch(`/orders.json?status=any&created_at_min=${from.toISOString()}&created_at_max=${to.toISOString()}&limit=250&fields=id,created_at,total_price,line_items`);
+    weeklyOrdersData=d.orders||[];
+    if(weeklyOrdersData.length===250){
+      try{
+        const d2=await shopFetch(`/orders.json?status=any&created_at_min=${from.toISOString()}&created_at_max=${to.toISOString()}&limit=250&fields=id,created_at,total_price,line_items&since_id=${weeklyOrdersData[weeklyOrdersData.length-1].id}`);
+        if(d2.orders&&d2.orders.length)weeklyOrdersData=[...weeklyOrdersData,...d2.orders];
+      }catch(e){}
+    }
+  }catch(e){
+    weeklyOrdersData=ordersData;
+  }
+  renderWeeklyTop20();
+  renderNoSaleDiagnosis();
+  renderSpark();
+}
+
+function renderWeeklyTop20(){
+  const cnt={},rm={},dayMap={}; // cnt=units, rm=revenue, dayMap=sales by day
+  const now=new Date();
+  const dayNames=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+  // Build 7-day window labels
+  const days=Array.from({length:7},(_,i)=>{
+    const d=new Date(now);d.setDate(d.getDate()-(6-i));
+    return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
+  });
+
+  // Set the date range label from global state
+  document.getElementById('weeklyRange').textContent=rangeLabel();
+
+  weeklyOrdersData.forEach(o=>{
+    const oDate=new Date(o.created_at);
+    const dKey=oDate.toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
+    (o.line_items||[]).forEach(li=>{
+      const t=li.title;
+      cnt[t]=(cnt[t]||0)+li.quantity;
+      rm[t]=(rm[t]||0)+parseFloat(li.price)*li.quantity;
+      if(!dayMap[t])dayMap[t]={};
+      dayMap[t][dKey]=(dayMap[t][dKey]||0)+li.quantity;
+    });
+  });
+
+  // Get product stock map
+  const stockMap={};
+  const typeMap={};
+  allProducts.forEach(p=>{
+    const stock=(p.variants||[]).reduce((s,v)=>s+(v.inventory_quantity||0),0);
+    stockMap[p.title]=stock;
+    typeMap[p.title]=p.product_type||'—';
+  });
+
+  const top20=Object.keys(cnt).sort((a,b)=>rm[b]-rm[a]).slice(0,20);
+
+  if(!top20.length){
+    document.getElementById('top20Tbl').innerHTML='<tr><td colspan="7" class="nodata">No orders in last 7 days. Connect Shopify or use Demo Data.</td></tr>';
+    return;
+  }
+
+  const maxRev=rm[top20[0]]||1;
+
+  document.getElementById('top20Tbl').innerHTML=top20.map((p,i)=>{
+    const stock=stockMap[p]!==undefined?stockMap[p]:'—';
+    const stockPill=stock===0?'pr':stock==='—'?'pm':stock<10?'pa':'pg';
+    const stockLbl=stock===0?'Out':stock==='—'?'—':stock<10?`Low (${stock})`:stock;
+    const dailyAvg=(cnt[p]/7).toFixed(1);
+    const revPct=Math.round(rm[p]/maxRev*100);
+
+    // Mini sparkline for this product across 7 days
+    const daySales=days.map(d=>dayMap[p][d]||0);
+    const maxDay=Math.max(...daySales,1);
+    const miniSpark=daySales.map((v,di)=>{
+      const h=Math.max(3,Math.round(v/maxDay*20));
+      const col=v===0?'var(--border2)':i<3?'var(--accent)':'var(--blue)';
+      return`<div style="width:6px;height:${h}px;background:${col};border-radius:1px;flex-shrink:0" title="${days[di]}: ${v} units"></div>`;
+    }).join('');
+    const sparkHtml=`<div style="display:flex;align-items:flex-end;gap:2px;height:20px">${miniSpark}</div>`;
+
+    // Revenue bar
+    const barHtml=`<div style="display:flex;align-items:center;gap:6px">
+      <div style="width:60px;height:5px;background:var(--border);border-radius:3px;overflow:hidden">
+        <div style="width:${revPct}%;height:100%;background:${i<3?'var(--accent)':'var(--blue)'}"></div>
+      </div>
+      <span class="tm" style="color:var(--accent)">PKR ${fmt(rm[p])}</span>
+    </div>`;
+
+    return`<tr>
+      <td class="tm tmut" style="font-weight:700;color:${i<3?'var(--accent)':'var(--muted)'}">${String(i+1).padStart(2,'0')}</td>
+      <td style="font-weight:${i<5?'600':'500'};max-width:220px">${p}</td>
+      <td class="tmut tm" style="font-size:11px">${typeMap[p]||'—'}</td>
+      <td class="tm" style="font-weight:600">${cnt[p]}</td>
+      <td>${barHtml}</td>
+      <td class="tm tmut">${dailyAvg}/day</td>
+      <td><span class="pill ${stockPill}">${stockLbl}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderNoSaleDiagnosis(){
+  // Products that exist in Shopify but had ZERO orders in last 7 days
+  const soldIds=new Set();
+  const soldTitles=new Set();
+  weeklyOrdersData.forEach(o=>(o.line_items||[]).forEach(li=>{soldIds.add(li.product_id);soldTitles.add(li.title);}));
+
+  const noSale=allProducts.filter(p=>!soldIds.has(p.id)&&p.status==='active');
+
+  if(!noSale.length){
+    document.getElementById('noSaleTbl').innerHTML='<tr><td colspan="6" class="nodata">All active products had sales this week 🎉</td></tr>';
+    return;
+  }
+
+  // Diagnose each product
+  const diagnosed=noSale.map(p=>{
+    const stock=(p.variants||[]).reduce((s,v)=>s+(v.inventory_quantity||0),0);
+    const availVariants=(p.variants||[]).filter(v=>(v.inventory_quantity||0)>0).length;
+    const totalVariants=(p.variants||[]).length;
+    const price=parseFloat((p.variants||[{}])[0]?.price||0);
+    // images check only valid when connected to real Shopify (demo products have no images array)
+    const hasImages=STORE==='demo' ? true : (p.images||[]).length>0;
+    const allOut=(p.variants||[]).every(v=>(v.inventory_quantity||0)===0);
+
+    // Score-based reason diagnosis
+    let reasons=[];
+    let action='';
+    let severity='pm'; // pill class
+
+    if(allOut){
+      reasons.push('All variants out of stock');action='Restock urgently';severity='pr';
+    } else if(stock<5){
+      reasons.push(`Only ${stock} units left — customers may not trust low stock`);
+      action='Restock soon';severity='pa';
+    }
+
+    if(availVariants<totalVariants/2&&totalVariants>1){
+      reasons.push(`${availVariants}/${totalVariants} variants in stock — key sizes missing`);
+      action=action||'Check size availability';severity=severity==='pm'?'pa':severity;
+    }
+
+    if(price>5000){
+      reasons.push('High price point — may need discount or bundle');
+      action=action||'Review pricing or bundle offer';severity=severity==='pm'?'pb':severity;
+    }
+
+    if(!hasImages){
+      reasons.push('No product images uploaded');
+      action=action||'Add product images immediately';severity='pr';
+    }
+
+    // Check if product type is a slow category based on weekly data
+    const typeCount={};
+    weeklyOrdersData.forEach(o=>(o.line_items||[]).forEach(li=>{
+      const prod=allProducts.find(pr=>pr.id===li.product_id);
+      if(prod){typeCount[prod.product_type]=(typeCount[prod.product_type]||0)+1;}
+    }));
+    const thisTypeTotal=typeCount[p.product_type]||0;
+    if(thisTypeTotal===0&&p.product_type){
+      reasons.push(`Whole category "${p.product_type}" has no sales this week`);
+      action=action||'Review category — may need campaign push';
+      severity=severity==='pm'?'pb':severity;
+    }
+
+    // New product with no history
+    const createdDaysAgo=Math.floor((Date.now()-new Date(p.created_at).getTime())/(86400*1000));
+    if(createdDaysAgo<14&&reasons.length===0){
+      reasons.push('New product — less than 2 weeks old, not enough exposure yet');
+      action='Push via ads or social';severity='pb';
+    }
+
+    // Default if no specific reason found
+    if(reasons.length===0){
+      reasons.push('Active but no traction — may need visibility boost');
+      action='Add to ads campaign or featured collection';severity='pb';
+    }
+
+    return{p,stock,price,reasons,action,severity};
+  }).sort((a,b)=>{
+    // Sort: out of stock first (urgent), then low stock, then others
+    const order={pr:0,pa:1,pb:2,pm:3};
+    return(order[a.severity]||3)-(order[b.severity]||3);
+  }).slice(0,25); // max 25 rows
+
+  document.getElementById('noSaleTbl').innerHTML=diagnosed.map(({p,stock,price,reasons,action,severity})=>{
+    const stockLbl=stock===0?'Out of Stock':stock<5?`Low (${stock})`:stock<10?`${stock} left`:`${stock}`;
+    const stockPill=stock===0?'pr':stock<5?'pr':stock<10?'pa':'pm';
+    const reasonHtml=reasons.slice(0,2).map(r=>`<div style="font-size:11px;color:var(--muted);margin-bottom:2px">• ${r}</div>`).join('');
+    return`<tr>
+      <td style="font-weight:500;max-width:200px">${p.title}</td>
+      <td class="tm tmut" style="font-size:11px">${p.product_type||'—'}</td>
+      <td><span class="pill ${stockPill}">${stockLbl}</span></td>
+      <td class="tm">PKR ${fmt(price)}</td>
+      <td style="min-width:220px">${reasonHtml}</td>
+      <td><span class="pill ${severity}" style="white-space:normal;line-height:1.4">${action}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderSpark(){
+  // Build day keys from current date range
+  const {from,to}=getRange();
+  const dayRev={};
+  // Build list of days in the range (max 31 for display)
+  const totalDays=Math.min(31,Math.round((to-from)/(86400*1000))+1);
+  const dayKeys=Array.from({length:totalDays},(_,i)=>{
+    const d=new Date(from);d.setDate(d.getDate()+i);
+    return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
+  });
+  weeklyOrdersData.forEach(o=>{
+    const k=new Date(o.created_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
+    dayRev[k]=(dayRev[k]||0)+parseFloat(o.total_price||0);
+  });
+  const vals=dayKeys.map(k=>dayRev[k]||0);
+  const mx=Math.max(...vals,1);
+  const todayKey=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
+  document.getElementById('sparkChart').innerHTML=vals.map((v,i)=>{
+    const isToday=dayKeys[i]===todayKey;
+    const col=isToday?'var(--accent)':'var(--blue)';
+    const opacity=isToday?'1':'0.65';
+    return`<div class="sbar" style="height:${Math.max(6,Math.round(v/mx*70))}px;background:${col};opacity:${opacity}" title="${dayKeys[i]}: PKR ${fmt(v)}"></div>`;
+  }).join('');
+  // Only show every Nth label if too many days
+  const step=totalDays>14?Math.ceil(totalDays/7):1;
+  document.getElementById('sparkLabels').innerHTML=dayKeys.map((l,i)=>`<div class="slbl" style="${dayKeys[i]===todayKey?'color:var(--accent)':''}">${i%step===0||i===totalDays-1?l:''}</div>`).join('');
+}
+function renderAlerts(rev,ords,roas,rto){
+  const al=[];
+  if(ords===0)al.push({cls:'al-amber',msg:'No orders yet today. Check if website is live and ads are running.'});
+  if(rto>15)al.push({cls:'al-red',msg:`High RTO today: ${rto} returns. Check courier and order quality.`});
+  if(roas>0&&roas<2)al.push({cls:'al-red',msg:`Blended ROAS is ${roas.toFixed(1)}x — below 2x. Review ad creatives and targeting.`});
+  // Add Drive warning if sheets not loaded
+  const aBadge = document.getElementById('bAds');
+  if(aBadge && aBadge.className.includes('red')){
+    al.unshift({cls:'al-amber',msg:'<strong>Ads / Courier / CS sheet data not loading.</strong> Make sure the Google Sheet is set to <em>Anyone with the link can view</em>. Also check the sheet tab names in the setup screen are spelled correctly.'});
+  }
+  document.getElementById('alertsZone').innerHTML=al.map(a=>`<div class="alert ${a.cls}"><div>⚠</div><div>${a.msg}</div></div>`).join('');
+}
+
+// ═══════════ PRODUCTS ═══════════
+function renderProducts(){
+  const filter=document.getElementById('stockFilter')?.value||'all';
+  const status=document.getElementById('prodStatus')?.value||'active';
+  let rows=[];
+  allProducts.forEach(p=>{
+    if(status==='active'&&p.status!=='active')return;
+    (p.variants||[]).forEach(v=>{
+      const s=v.inventory_quantity||0;
+      if(filter==='out'&&s!==0)return;if(filter==='low'&&(s===0||s>=10))return;if(filter==='ok'&&s<10)return;
+      rows.push(`<tr>
+        <td style="font-weight:500">${p.title}</td>
+        <td class="tmut tm">${v.title==='Default Title'?'—':v.title}</td>
+        <td><span class="pill ${s===0?'pr':s<10?'pa':'pg'}">${s===0?'Out':s<10?'Low ('+s+')':s}</span></td>
+        <td><span class="pill ${p.status==='active'?'pg':'pm'}">${p.status}</span></td>
+        <td class="tm">PKR ${fmt(parseFloat(v.price)||0)}</td>
+      </tr>`);
+    });
+  });
+  document.getElementById('prodTbl').innerHTML=rows.join('')||'<tr><td colspan="5" class="nodata">No products match filter</td></tr>';
+}
+function applyProdFilter(){renderProducts();}
+
+// ═══════════ SORT ═══════════
+function runSort(){
+  if(!allProducts.length){document.getElementById('sortResults').innerHTML='<div class="nodata">Load Shopify data first</div>';return;}
+  const rule=document.getElementById('sortRule').value,cat=document.getElementById('sortCat').value;
+  let prods=[...allProducts];
+  if(cat!=='all')prods=prods.filter(p=>p.product_type===cat||p.title.toLowerCase().includes(cat.toLowerCase()));
+  const gT=p=>(p.variants||[]).reduce((s,v)=>s+(v.inventory_quantity||0),0);
+  const gA=p=>(p.variants||[]).filter(v=>(v.inventory_quantity||0)>0).length;
+  prods.sort((a,b)=>rule==='stock_asc'?gT(a)-gT(b):gT(b)-gT(a));
+  const mx=Math.max(...prods.map(gT),1);
+  document.getElementById('sortResults').innerHTML='<div style="display:flex;flex-direction:column;gap:8px">'+prods.map((p,i)=>{
+    const s=gT(p),av=gA(p),tot=(p.variants||[]).length,pct=Math.round(s/mx*100);
+    const col=s===0?'var(--red)':av<tot/2?'var(--accent)':'var(--green)';
+    return`<div class="sort-item">
+      <div class="srnk">${String(i+1).padStart(2,'0')}</div>
+      <div class="srinfo"><div class="srname">${p.title}</div><div class="srmeta">${p.product_type||'—'} · ${av}/${tot} variants in stock</div></div>
+      <div class="srbar"><div class="srbl">${s} units</div><div class="btrack"><div class="bfill" style="width:${pct}%;background:${col}"></div></div></div>
+    </div>`;
+  }).join('')+'</div>';
+  document.getElementById('sortSts').textContent=`✓ Sorted ${prods.length} products`;
+}
+function copySteps(){
+  navigator.clipboard.writeText('HOW TO APPLY CATALOG SORT IN SHOPIFY\n\n1. Shopify Admin → Products → Collections\n2. Open your collection → Sort → Manually\n3. Drag products to match Catalog Sorter order\n\nFor permanent automation: use Shopify Flow to re-sort by inventory_quantity every morning.');
+  document.getElementById('sortSts').textContent='✓ Copied';setTimeout(()=>document.getElementById('sortSts').textContent='',3000);
+}
+
+// ═══════════ MANUAL ═══════════
+function saveManual(){
+  const btn=event.target;
+  manualData.stock=document.getElementById('i-stock').value||'';
+  manualData.web=document.getElementById('i-web').value||'';
+  manualData.crr=document.getElementById('i-crr').value||'';
+  manualData.obs=document.getElementById('i-obs').value||'';
+  saveMStore();
+  btn.textContent='✓ Saved';btn.style.background='var(--green)';
+  setTimeout(()=>{btn.textContent='Save Flags';btn.style.background='';},2000);
+}
+function saveCSOverride(){
+  const btn=event.target;
+  manualData.called=parseFloat(document.getElementById('i-called').value)||0;
+  manualData.confirmed=parseFloat(document.getElementById('i-confirmed').value)||0;
+  manualData.cancelled=parseFloat(document.getElementById('i-cancelled').value)||0;
+  manualData.returns=parseFloat(document.getElementById('i-returns').value)||0;
+  saveMStore();renderDailyStats();
+  btn.textContent='✓ Saved';btn.style.background='var(--green)';
+  setTimeout(()=>{btn.textContent='Save CS Override';btn.style.background='';},2000);
+}
+
+// ═══════════ REPORT ═══════════
+function buildReport(){
+  const rev=ordersData.reduce((s,o)=>s+parseFloat(o.total_price||0),0);
+  const ords=ordersData.length,aov=ords>0?Math.round(rev/ords):0;
+  const d=new Date();
+  const ds=d.toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const adT=window._adsTot||{};
+  const i=adsIdx;
+  let mS=0,mR=0,mRoas=0,mO=0,gS=0,gR=0,gRoas=0,gO=0,tS=0,tR=0,tRoas=0,tO=0,sS=0,sR=0,sRoas=0,sO=0;
+  if(adsLatest&&i){
+    mS=nc(adsLatest[i.mS]);mR=nc(adsLatest[i.mR]);mRoas=nc(adsLatest[i.mRoas]);mO=nc(adsLatest[i.mO]);
+    gS=nc(adsLatest[i.gS]);gR=nc(adsLatest[i.gR]);gRoas=nc(adsLatest[i.gRoas]);gO=nc(adsLatest[i.gO]);
+    tS=nc(adsLatest[i.tS]);tR=nc(adsLatest[i.tR]);tRoas=nc(adsLatest[i.tRoas]);tO=nc(adsLatest[i.tO]);
+    sS=nc(adsLatest[i.sS]);sR=nc(adsLatest[i.sR]);sRoas=nc(adsLatest[i.sRoas]);sO=nc(adsLatest[i.sO]);
+  }
+  const totS=mS+gS+tS+sS,totR=mR+gR+tR+sR,totO=mO+gO+tO+sO;
+  const totRoas=totS>0?totR/totS:0;
+  const cnt=window._crrCnt||{dispatched:0,delivered:0,returned:0,booked:0,total:0};
+  const called=manualData.called||0,confirmed=manualData.confirmed||0;
+  const confRate=called>0?Math.round(confirmed/called*100)+'%':'—';
+  // Use weekly data for top products in report
+  const cm={},rv={};
+  const reportOrders=weeklyOrdersData.length>0?weeklyOrdersData:ordersData;
+  reportOrders.forEach(o=>(o.line_items||[]).forEach(li=>{cm[li.title]=(cm[li.title]||0)+li.quantity;rv[li.title]=(rv[li.title]||0)+parseFloat(li.price)*li.quantity;}));
+  const top5=Object.keys(cm).sort((a,b)=>rv[b]-rv[a]).slice(0,5);
+  // CS agent totals
+  const csLine=csData.agents.map(a=>`  ${a.name}: Chats ${fmt(a.chats)} | Outbound ${fmt(a.outbound)} | Returns ${fmt(a.returns)}`).join('\n')||'  Not loaded';
+  const os=csData.orderStatus;
+
+  const report=`━━━━━━━━━━━━━━━━━━━━━━━━━━━
+MENDEEZ DAILY OPS REPORT
+${ds}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📦 SHOPIFY (LIVE)
+Revenue:          PKR ${fmt(rev)}
+Orders:           ${ords}
+Avg Order Value:  PKR ${fmt(aov)}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📣 ADS — PLATFORM WISE
+
+▸ Meta
+  Spend: PKR ${fmt(mS)} | Revenue: PKR ${fmt(mR)}
+  ROAS: ${mRoas?mRoas.toFixed(2)+'x':'—'} | Orders: ${mO||'—'} | CPA: ${mO>0?'PKR '+fmt(Math.round(mS/mO)):'—'}
+
+▸ Google
+  Spend: PKR ${fmt(gS)} | Revenue: PKR ${fmt(gR)}
+  ROAS: ${gRoas?gRoas.toFixed(2)+'x':'—'} | Orders: ${gO||'—'} | CPA: ${gO>0?'PKR '+fmt(Math.round(gS/gO)):'—'}
+
+▸ TikTok
+  Spend: PKR ${fmt(tS)} | Revenue: PKR ${fmt(tR)}
+  ROAS: ${tRoas?tRoas.toFixed(2)+'x':'—'} | Orders: ${tO||'—'}
+
+▸ Snapchat
+  Spend: PKR ${fmt(sS)} | Revenue: PKR ${fmt(sR)}
+  ROAS: ${sRoas?sRoas.toFixed(2)+'x':'—'} | Orders: ${sO||'—'}
+
+▸ COMBINED
+  Total Spend:   PKR ${fmt(totS)}
+  Total Revenue: PKR ${fmt(totR)}
+  Blended ROAS:  ${totRoas>0?totRoas.toFixed(2)+'x':'—'}
+  Total Orders:  ${totO||'—'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚚 COURIER
+
+Dispatched:       ${cnt.dispatched}
+Delivered:        ${cnt.delivered}
+RTO / Returned:   ${cnt.returned}
+Booked (Pending): ${cnt.booked}
+Total CNs:        ${cnt.total}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📞 CS & CONFIRMATIONS (MTD)
+
+${csLine}
+
+Order Status MTD:
+  Landed:        ${os.landed?fmt(os.landed):'—'}
+  Dispatched:    ${os.dispatched?fmt(os.dispatched):'—'}
+  Delivered:     ${os.delivered?fmt(os.delivered):'—'}
+  Pending:       ${os.pending?fmt(os.pending):'—'}
+  Cancelled:     ${os.cancel?fmt(os.cancel):'—'}
+  Returns:       ${os.returns?fmt(os.returns):'—'}
+
+${called>0?`Today Confirmation Override:
+  Called: ${called} | Confirmed: ${confirmed} (${confRate}) | Cancelled: ${manualData.cancelled||0} | Returns: ${manualData.returns||0}`:''}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🏆 TOP 5 PRODUCTS TODAY
+
+${top5.length?top5.map((p,i)=>`${i+1}. ${p}\n   PKR ${fmt(rv[p])} · ${cm[p]} units`).join('\n'):'No sales data yet'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠ FLAGS
+
+Stock Issues:    ${manualData.stock||'None'}
+Website Issues:  ${manualData.web||'None'}
+Courier Issues:  ${manualData.crr||'None'}
+
+📝 OBSERVATION
+${manualData.obs||'—'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+
+  document.getElementById('reportBox').innerHTML=`<span style="color:var(--text)">${report}</span>`;
+  window._rptTxt=report;
+}
+function copyReport(){
+  if(!window._rptTxt)buildReport();
+  navigator.clipboard.writeText(window._rptTxt).then(()=>{
+    const b=document.getElementById('copyBtn');b.textContent='✓ Copied';b.classList.add('copied');
+    setTimeout(()=>{b.textContent='⎘ Copy for WhatsApp';b.classList.remove('copied');},3000);
+  });
+}
+
+// ═══════════ BADGES ═══════════
+function setBadge(src,state,label){
+  const map={s:{b:'bShopify',d:'dot-s',sb:'sb-s'},a:{b:'bAds',d:'dot-a',sb:'sb-a'},c:{b:'bCrr',d:'dot-c',sb:'sb-c'},cs:{b:'bCS',d:'dot-cs',sb:'sb-cs'}};
+  const m=map[src];if(!m)return;
+  const col=state==='live'?'var(--green)':state==='error'?'var(--red)':'var(--accent)';
+  const lbl={'s':'Shopify','a':'Ads','c':'Courier','cs':'CS'}[src];
+  const b=document.getElementById(m.b);
+  if(b){b.className='badge '+(state==='live'?'badge-green':state==='error'?'badge-red':'badge-amber');b.innerHTML=`<div class="sdot" style="background:${col}"></div>${lbl}: ${label}`;}
+  const d=document.getElementById(m.d);if(d)d.style.background=col;
+  const s=document.getElementById(m.sb);if(s)s.textContent=label;
+}
+
+// ═══════════ NAV ═══════════
+function switchTab(name,el){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  el.classList.add('active');
+  if(name==='report')buildReport();
+}
+
+// ═══════════ DEMO ═══════════
+function loadDemo(){
+  document.getElementById('setupOverlay').style.display='none';
+  STORE='demo';
+  // Read the Sheet ID and tab names from the setup form — use real values if entered
+  const enteredSheet=document.getElementById('cfgSheet').value.trim();
+  const enteredAds=document.getElementById('cfgAds').value.trim();
+  const enteredCrr=document.getElementById('cfgCrr').value.trim();
+  const enteredCS=document.getElementById('cfgCS').value.trim();
+  SHEET_ID=enteredSheet||'1OOcuvCYCX9Svl8nH3BpbJWeABoA4VWgq6e0M_UC5lZs';
+  ADS_TAB=enteredAds||'Think Spendin PW 26';
+  CRR_TAB=enteredCrr||'Courier Data 26';
+  CS_TAB=enteredCS||'Perf Report 26';
+  // Generate 7 days of demo orders
+  ordersData=Array.from({length:87},(_,i)=>({id:i,total_price:(1200+Math.random()*4000).toFixed(2),created_at:new Date().toISOString(),line_items:[{title:['Jersey Pajamas - Heather Grey','Oversized Mesh Tee - Cream','Oversized Printed Tee - Blue','Jogger Pants - Black','Knitted Polo Shirt - White'][i%5],quantity:1,price:(1200+Math.random()*4000).toFixed(2),product_id:i%10}]}));
+  const demoProducts=['Jersey Pajamas - Heather Grey','Oversized Mesh Tee - Cream','Oversized Printed Tee - Blue','Jogger Pants - Black','Knitted Polo Shirt - White','Boxer Trunks Pack Of 3','Oversized Mesh Tee - Black','Textured Oversized T-Shirt - Navy Blue','Jersey Shorts - Black','Pintex Jogger Pants - Black'];
+  weeklyOrdersData=Array.from({length:420},(_,i)=>{
+    const daysAgo=Math.floor(i/60);const d=new Date();d.setDate(d.getDate()-daysAgo);
+    const title=demoProducts[Math.floor(Math.random()*demoProducts.length)];
+    const price=1200+Math.random()*3000;
+    return{id:1000+i,total_price:price.toFixed(2),created_at:d.toISOString(),line_items:[{title,quantity:1,price:price.toFixed(2),product_id:demoProducts.indexOf(title)}]};
+  });
+  allProducts=Array.from({length:25},(_,i)=>({id:i,title:['Jersey Pajamas - Heather Grey','Oversized Mesh Tee - Cream','Knitted Polo Shirt - White','Jogger Pants - Black','Boxer Trunks Pack Of 3'][i%5]+' '+['S','M','L'][i%3],product_type:['Pajama','T-Shirts','Polo','Jogger Pants','Boxer Trunks'][i%5],status:'active',variants:[{title:'Default Title',inventory_quantity:Math.floor(Math.random()*50),price:'1995'}]}));
+  window._adsTot={spend:49969,rev:292338,orders:86,roas:5.85};
+  adsLatest=null;adsIdx=null;
+  // Demo ads cards
+  const pd=[{n:'Meta',ic:'im',lt:'M',s:32891,o:63,rv:200273,roas:6.09},{n:'Google',ic:'ig',lt:'G',s:12028,o:14,rv:67621,roas:5.62},{n:'TikTok',ic:'it',lt:'T',s:3500,o:8,rv:22863,roas:6.53},{n:'Snapchat',ic:'is',lt:'S',s:1550,o:1,rv:1582,roas:1.02}];
+  const tS2=pd.reduce((a,p)=>a+p.s,0),tR2=pd.reduce((a,p)=>a+p.rv,0),tO2=pd.reduce((a,p)=>a+p.o,0);
+  document.getElementById('platCards').innerHTML=pd.map(p=>`<div class="pc"><div class="pn"><div class="pi ${p.ic}">${p.lt}</div>${p.n}</div><div class="kr"><div><div class="kl">Spend</div><div class="kv">${fPKR(p.s)}</div></div><div><div class="kl">Revenue</div><div class="kv amber">${fPKR(p.rv)}</div></div></div><div class="div"></div><div class="kr"><div><div class="kl">ROAS</div><div class="kv ${rcol(p.roas)}">${p.roas.toFixed(2)}x</div></div><div><div class="kl">Orders</div><div class="kv">${p.o}</div></div></div><div style="margin-top:8px"><div class="kl">CPA</div><div style="font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:2px">PKR ${fmt(Math.round(p.s/p.o))}</div></div></div>`).join('')+`<div class="pc" style="border-color:var(--accent-dim)"><div class="pn"><div class="pi ix">Σ</div>Combined</div><div class="kr"><div><div class="kl">Total Spend</div><div class="kv amber">${fPKR(tS2)}</div></div><div><div class="kl">Total Revenue</div><div class="kv green">${fPKR(tR2)}</div></div></div><div class="div"></div><div class="kr"><div><div class="kl">Blended ROAS</div><div class="kv green">${(tR2/tS2).toFixed(2)}x</div></div><div><div class="kl">Orders</div><div class="kv">${tO2}</div></div></div></div>`;
+  document.getElementById('adsDateLbl').textContent='Demo: 11-May-2026';
+  document.getElementById('adsTbl').innerHTML=['7-May','8-May','9-May','10-May','11-May'].map(d=>`<tr><td style="font-weight:500">${d}-2026</td><td class="tm">PKR ${fmt(Math.round(28000+Math.random()*10000))}</td><td class="tm" style="color:var(--green)">${(4.5+Math.random()*2).toFixed(1)}x</td><td class="tm">PKR ${fmt(Math.round(10000+Math.random()*5000))}</td><td class="tm" style="color:var(--green)">${(4+Math.random()*3).toFixed(1)}x</td><td class="tm">PKR 3,500</td><td class="tm" style="color:var(--green)">${(5+Math.random()*2).toFixed(1)}x</td><td class="tm">PKR ${fmt(Math.round(1500+Math.random()*1000))}</td><td class="tm" style="color:var(--amber)">${(2+Math.random()*3).toFixed(1)}x</td><td class="tm" style="color:var(--accent);font-weight:600">PKR ${fmt(Math.round(44000+Math.random()*12000))}</td><td class="tm" style="color:var(--green);font-weight:600">${(4.8+Math.random()*1.5).toFixed(1)}x</td></tr>`).join('');
+  // Demo courier
+  const statuses=['Arrived','Arrived','Out For Delivery','Out For Delivery','Booked','Arrived','Arrived','Out For Delivery'];
+  allCrr=Array.from({length:68},(_,i)=>{const raw=statuses[i%statuses.length];return{cn:'503908'+String(1600+i),sd:new Date().toLocaleDateString('en-GB'),cust:'Customer '+i,city:['KHI','LHE','RWP','ISB','FSD'][i%5],prod:'Product '+i,cod:String(1200+i*100),att:'1',raw,m:statusMap(raw)};});
+  filtCrr=[...allCrr];crrPage=1;
+  document.getElementById('cnCount').textContent='(68 CNs — demo)';
+  renderCrrSummary();renderCrrTable();
+  // Demo CS
+  csData={
+    agents:[
+      {name:'Agent 1 (A)',chats:892,inbound:163,outbound:570,returns:235,complaints:0,todayChats:48,todayOut:22},
+      {name:'Agent 2 (N)',chats:1047,inbound:54,outbound:481,returns:0,complaints:149,todayChats:55,todayOut:17}
+    ],
+    orderStatus:{landed:726,dispatched:501,delivered:431,pending:85,cancel:27,returns:12},
+    ewh:{exch:21,dispVal:1679369,dispUnits:916,returnUnits:18}
+  };
+  setBadge('s','live','87 orders (demo)');
+  renderDailyStats();renderProducts();renderWeeklyTop20();renderNoSaleDiagnosis();
+  // Fetch REAL sheet data — Ads, Courier, CS don't need Shopify credentials
+  document.getElementById('lastUpd').textContent='Fetching sheet data...';
+  fetchSheets().then(()=>{
+    document.getElementById('lastUpd').textContent=new Date().toLocaleTimeString();
+  }).catch(()=>{
+    // If sheet fetch fails (e.g. no internet), fall back to demo CS data
+    csData={
+      agents:[
+        {name:'Agent 1 (A)',chats:892,inbound:163,outbound:570,returns:235,complaints:0,todayChats:48,todayOut:22},
+        {name:'Agent 2 (N)',chats:1047,inbound:54,outbound:481,returns:0,complaints:149,todayChats:55,todayOut:17}
+      ],
+      orderStatus:{landed:726,dispatched:501,delivered:431,pending:85,cancel:27,returns:12},
+      ewh:{exch:21,dispVal:1679369,dispUnits:916,returnUnits:18}
+    };
+    setBadge('a','amber','Sheet unavailable');setBadge('c','amber','Sheet unavailable');setBadge('cs','amber','Sheet unavailable');
+    renderCS();
+    document.getElementById('lastUpd').textContent=new Date().toLocaleTimeString();
+  });
+}
+
+function reloadDemo(){
+  const {from,to}=getRange();
+  const days=Math.max(1,Math.round((to-from)/(86400*1000))+1);
+  const demoProds=['Jersey Pajamas - Heather Grey','Oversized Mesh Tee - Cream','Oversized Printed Tee - Blue','Jogger Pants - Black','Knitted Polo Shirt - White','Boxer Trunks Pack Of 3','Oversized Mesh Tee - Black','Textured Oversized T-Shirt - Navy Blue','Jersey Shorts - Black','Pintex Jogger Pants - Black'];
+  // Scale orders proportionally to date range (7 days = ~87 orders baseline)
+  const ordersPerDay=Math.max(3,Math.round(87/7));
+  const totalOrders=ordersPerDay*days;
+  const generated=Array.from({length:totalOrders},(_,i)=>{
+    // Spread orders across the selected date range
+    const d=new Date(from);
+    d.setDate(d.getDate()+Math.floor(Math.random()*days));
+    d.setHours(Math.floor(Math.random()*16)+8,Math.floor(Math.random()*60),0,0); // 8am-midnight
+    const title=demoProds[Math.floor(Math.random()*demoProds.length)];
+    const price=1200+Math.random()*3000;
+    return{
+      id:2000+i,
+      total_price:price.toFixed(2),
+      created_at:d.toISOString(),
+      line_items:[{title,quantity:1,price:price.toFixed(2),product_id:demoProds.indexOf(title)}]
+    };
+  });
+  ordersData=generated;
+  weeklyOrdersData=generated;
+  document.getElementById('dActiveLbl').textContent='📅 '+rangeLabel();
+  document.getElementById('lastUpd').textContent=new Date().toLocaleTimeString();
+  renderDailyStats();
+  renderWeeklyTop20();
+  renderNoSaleDiagnosis();
+  renderSpark();
+}
+
+// ═══════════ SHEET CONNECTION TEST ═══════════
+async function testSheetConnection(){
+  const sid = document.getElementById('cfgSheet').value.trim() || SHEET_ID;
+  const tab = document.getElementById('cfgAds').value.trim() || ADS_TAB;
+  const el = document.getElementById('sheetTestResult');
+  el.style.display='block';
+  el.style.color='var(--accent)';
+  el.textContent='Testing connection...';
+  const testUrl = `https://docs.google.com/spreadsheets/d/${sid}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tab)}`;
+  el.textContent += '\nURL: '+testUrl;
+  try{
+    const rows = await fetchSheetJSONP(sid, tab);
+    if(rows && rows.length > 0){
+      el.style.color='var(--green)';
+      el.textContent='✓ Sheet connected!\n'
+        +'Tab: "'+tab+'"\n'
+        +'Rows: '+rows.length+'\n'
+        +'First cell: "'+( rows[0][0]||'empty' )+'"\n'
+        +'Second cell: "'+( rows[0][1]||'empty' )+'"';
+    } else {
+      el.style.color='var(--red)';
+      el.textContent='✗ Connected but no data.\nTab tried: "'+tab+'"\n\nOpen this URL in your browser to check:\n'+testUrl;
+    }
+  } catch(e){
+    el.style.color='var(--red)';
+    el.textContent='✗ Failed: '+e.message+'\n\nOpen this URL in your browser to verify the sheet is public:\n'+testUrl+'\n\n'
+      +'If it shows CSV data = sheet is public but proxy blocked\n'
+      +'If it asks for login = sheet is NOT set to public\n'
+      +'If it says tab not found = wrong tab name';
+  }
+}
+
+// ═══════════ INIT ═══════════
+window.addEventListener('load',()=>{
+  loadConfig();
+  document.getElementById('todayDate').textContent=new Date().toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  // Set default date inputs to today
+  const _td=new Date();
+  const _tdStr=_td.toISOString().split('T')[0];
+  document.getElementById('dateFrom').value=_tdStr;
+  document.getElementById('dateTo').value=_tdStr;
+  document.getElementById('dActiveLbl').textContent='📅 Today';
+  if(STORE&&TOKEN){
+    document.getElementById('cfgStore').value=STORE;
+    document.getElementById('cfgToken').value=TOKEN;
+    document.getElementById('cfgSheet').value=SHEET_ID;
+    document.getElementById('cfgAds').value=ADS_TAB;
+    document.getElementById('cfgCrr').value=CRR_TAB;
+    document.getElementById('cfgCS').value=CS_TAB;
+  }
+  // Restore manual field values
+  if(manualData.stock)document.getElementById('i-stock').value=manualData.stock;
+  if(manualData.web)document.getElementById('i-web').value=manualData.web;
+  if(manualData.crr)document.getElementById('i-crr').value=manualData.crr;
+  if(manualData.obs)document.getElementById('i-obs').value=manualData.obs;
+  if(manualData.called)document.getElementById('i-called').value=manualData.called;
+  if(manualData.confirmed)document.getElementById('i-confirmed').value=manualData.confirmed;
+});
+</script>
+</body>
+</html>
